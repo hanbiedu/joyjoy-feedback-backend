@@ -12,20 +12,17 @@ document.addEventListener("DOMContentLoaded", () => {
       ageMonth: form.ageMonth.value,
       items: {
         item1: form.item1.value,
-        item2: form.item2?.value,
-        item3: form.item3?.value,
-        item4: form.item4?.value,
-        item5: form.item5?.value,
-        item6: form.item6?.value,
       }
     };
 
-    // JSON 미리보기 업데이트
+    // JSON 미리보기 표시
     preview.textContent = JSON.stringify(data, null, 2);
 
-    // 🔥 Render 백엔드로 보내기
+    // Render 백엔드 URL (⭐ 필수로 바꿔 넣기!)
+    const BACKEND_URL = "https://joyjoy-feedback-backend.onrender.com";
+
     try {
-      const response = await fetch("https://joyjoy-feedback-backend.onrender.com/api/feedback", {
+      const response = await fetch(`${BACKEND_URL}/api/feedback`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data)
@@ -34,7 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const result = await response.json();
       console.log("서버 응답:", result);
 
-      alert("서버 전송 완료!");
+      alert("서버 전송 성공!");
 
     } catch (err) {
       console.error("전송 오류:", err);
