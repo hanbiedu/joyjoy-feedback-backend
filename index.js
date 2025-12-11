@@ -155,6 +155,31 @@ app.post("/api/auto-feedback", (req, res) => {
   }
 });
 
+// 피드백 저장용 임시 엔드포인트
+// 나중에 여기서 MySQL에 저장하는 코드만 추가하면 됨
+app.post("/api/feedback", (req, res) => {
+  try {
+    const data = req.body || {};
+    console.log("피드백 저장 요청 도착:", data);
+
+    // TODO: 추후 여기서 MySQL INSERT 작업 수행
+
+    return res.json({
+      success: true,
+      message: "피드백이 임시로 저장(수신)되었습니다.",
+      received: data
+    });
+  } catch (err) {
+    console.error("피드백 저장 중 에러:", err);
+    return res.status(500).json({
+      success: false,
+      message: "피드백 저장 중 오류 발생"
+    });
+  }
+});
+
+
+
 
 // 서버 시작
 app.listen(PORT, () => {
