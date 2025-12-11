@@ -50,6 +50,115 @@ function normalizeScore4(score) {
   return n;
 }
 
+// 2) 점수 기반 요약 리스트 만들기 (LLM에 넘길 재료)
+function buildSummaryFromPatterns(data) {
+  const summaries = [];
+  const order = ["item1", "item2", "item3", "item4", "item5", "item6"];
+
+  order.forEach((key) => {
+    const rawScore = data[key];
+    if (rawScore === undefined || rawScore === null || rawScore === "") return;
+
+    const score = normalizeScore4(rawScore);
+    if (!score) return;
+
+    const patterns = feedbackPatterns[key];
+    if (!patterns) return;
+
+    const sentence = patterns[score];
+    if (!sentence) return;
+
+    summaries.push(sentence);
+  });
+
+  return summaries;
+}
+
+// 3) 템플릿만으로도 기본 문장 하나 만들어두기 (LLM 실패시 백업용)
+function buildRuleBasedText(data, summaries) {
+  const name = data.childName || "아이";
+  const ageMonth = data.ageMonth ? Number(data.ageMonth) : null;
+
+  const header = ageMonth
+    ? `${ageMonth}개월 ${name}의 오늘 클레이 크리스마스 티라이트 수업 참여 모습을 정리해 보았어요.`
+    : `${name}의 오늘 클레이 크리스마스 티라이트 수업 참여 모습을 정리해 보았어요.`;
+
+  if (!summaries || summaries.length === 0) {
+    return header;
+  }
+
+  return `${header}\n\n${summaries.map((s) => `- ${s}`).join("\n")}`;
+}
+
+
+// ---------------------------
+// 4) OpenAI LLM 호출 함수 (fetch 사용)
+// ---------------------------
+
+async function generateLLMFeedback(data) {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    console.warn("OPENAI_API_KEY가 설정되어 있지 않습니다. 템플릿 문장만 사용합니다.");
+    const summaries = buildSummaryFromPatterns(data);
+    return buildRuleBasedText(data, summaries);
+  }
+
+  const summaries = buildSummaryFromPatterns(data);
+  const fallbackText = buildRuleBasedText(data, summaries);
+
+  // 요약이 하나도 없으면 굳이 LLM 안 부르고 기본 문장만 리턴
+  if (!summaries || summaries.length === 0) {
+    return fallbackText;
+  }
+
+  const name = data.childName || "아이";
+  const ageMonth = data.ageMonth ? Number(data.ageMonth) : null;
+
+  const summaryText = summaries.map((s) => `- ${s}`).join("\n");
+
+  const prompt = `
+다음은 ${ageMonth ? ageMonth + "개월 " : ""}${name}의 오늘 수업에서 관찰한 발달 행동 요약이에요.
+이 내용을 바탕으로 부모님께 전달할 수업 피드백을 작성해 주세요.
+
+[관찰 요약]
+${summaryText}
+
+[작성 가이드]
+- 전체 3~5문장 정도로 자연스럽게 이어지는 글로 작성해 주세요.
+- 아이의 장점과 성장 가능성을 중심으로 부드럽게 표현해 주세요.
+- '못한다, 문제다' 같은 단정적인 표현은 피하고, '~할 수 있도록 도와줄게요.'처럼 제안형 표현을 사용해 주세요.
+- 조이조이 브랜드처럼 따뜻하고 세심한 톤으로, 한국어로 작성해 주세요.
+`;
+
+  try {
+    const response = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "gpt-4.1-mini",
+        input: prompt
+      })
+    });
+
+    if (!response.ok) {
+      console.error("OpenAI API 에러 상태:", response.status, await response.text());
+      return fallbackText;
+    }
+
+    const result = await response.json();
+    // Responses API는 output_text 헬퍼 필드를 제공함
+    const llmText = result.output_text || fallbackText;
+    return llmText;
+  } catch (err) {
+    console.error("OpenAI 호출 중 에러:", err);
+    return fallbackText;
+  }
+}
+
+
 // 활동 이름(옵션) – 문장 앞에 살짝 넣어주고 싶을 때 사용
 const activityLabels = {
   item1: "클레이 촉감 탐색",
@@ -59,6 +168,15 @@ const activityLabels = {
   item5: "클레이 색 섞기 & 꾸미기",
   item6: "지점토로 크리스마스 티라이트 홀더 만들기"
 };
+
+
+import OpenAI from "openai";
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY, // ← 방금 Render에 넣은 값
+});
+
+
+
 
 // 메인 자동 피드백 생성 함수
 function buildAutoFeedback(data) {
@@ -135,25 +253,34 @@ app.get("/", (req, res) => {
 // ★ 자동 문장 생성 엔드포인트
 // 예) POST https://joyjoy-feedback-backend.onrender.com/api/auto-feedback
 // body: { childName, ageMonth, item1, item2, item3, item4, item5, item6 }
-app.post("/api/auto-feedback", (req, res) => {
+// ---------------------------
+// 5) 자동 문장 생성 API (LLM + 템플릿)
+// ---------------------------
+
+app.post("/api/auto-feedback", async (req, res) => {
   try {
     const data = req.body || {};
+    console.log("auto-feedback 요청 데이터:", data);
 
-    const { text, perItem } = buildAutoFeedback(data);
+    const summaries = buildSummaryFromPatterns(data);
+    const ruleBasedText = buildRuleBasedText(data, summaries);
+    const llmText = await generateLLMFeedback(data);
 
     return res.json({
       success: true,
-      autoText: text,
-      perItem
+      autoText: llmText,        // 프론트에서 textarea에 넣을 문장
+      backupText: ruleBasedText, // 혹시 프론트에서 기본 문장을 보고 싶으면 사용 가능
+      summaries                 // 디버깅/확인용
     });
-  } catch (error) {
-    console.error("auto-feedback error:", error);
+  } catch (err) {
+    console.error("/api/auto-feedback 처리 중 에러:", err);
     return res.status(500).json({
       success: false,
-      message: "자동 피드백 생성 중 오류가 발생했어요."
+      message: "자동 피드백 생성 중 오류가 발생했습니다."
     });
   }
 });
+
 
 // 피드백 저장용 임시 엔드포인트
 // 나중에 여기서 MySQL에 저장하는 코드만 추가하면 됨
