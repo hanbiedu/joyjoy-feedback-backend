@@ -121,7 +121,7 @@ function buildRuleBasedText(data, summaries) {
 }
 
 // ---------------------------
-// 2) OpenAI LLM 호출 함수 (SDK 없이 fetch 사용)
+// 2) OpenAI LLM 호출 함수 (SDK 없이 fetch 사용) - 수정 버전
 // ---------------------------
 async function generateLLMFeedback(data) {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -133,9 +133,7 @@ async function generateLLMFeedback(data) {
 
   // 키 없으면 바로 템플릿으로
   if (!apiKey) {
-    console.warn(
-      "OPENAI_API_KEY가 설정되어 있지 않습니다. 템플릿 문장만 사용합니다."
-    );
+    console.warn("OPENAI_API_KEY가 설정되어 있지 않습니다. 템플릿 문장만 사용합니다.");
     return fallbackText;
   }
 
@@ -176,17 +174,31 @@ ${summaryText}
     });
 
     if (!response.ok) {
-      console.error(
-        "OpenAI API 에러 상태:",
-        response.status,
-        await response.text()
-      );
+      console.error("OpenAI API 에러 상태:", response.status, await response.text());
       return fallbackText;
     }
 
     const result = await response.json();
-    // responses API는 output_text 헬퍼 필드를 제공
-    const llmText = result.output_text || fallbackText;
+    console.log("OpenAI raw response:", JSON.stringify(result, null, 2).slice(0, 1000));
+
+    // ⚠ 여기서 실제 텍스트를 뽑아야 함
+    let llmText;
+
+    try {
+      const outputArray = result.output || [];
+      const messageItem = outputArray.find((item) => item.type === "message");
+      const contentArray = messageItem?.content || [];
+      const textItem = contentArray.find((c) => c.type === "output_text");
+      llmText = textItem?.text?.trim();
+    } catch (e) {
+      console.error("LLM 응답 파싱 중 오류:", e);
+    }
+
+    if (!llmText) {
+      console.warn("LLM 응답에서 텍스트를 찾지 못했습니다. 템플릿 문장을 사용합니다.");
+      return fallbackText;
+    }
+
     return llmText;
   } catch (err) {
     console.error("OpenAI 호출 중 에러:", err);
@@ -194,11 +206,13 @@ ${summaryText}
   }
 }
 
+
 // ---------------------------
 // 3) 자동 피드백 생성 API (LLM + 템플릿)
 // ---------------------------
 app.post("/api/auto-feedback", async (req, res) => {
   try {
+    console.log("💥 /api/auto-feedback 호출됨!");
     const data = req.body || {};
     console.log("auto-feedback 요청 데이터:", data);
 
@@ -250,5 +264,6 @@ app.post("/api/feedback", (req, res) => {
 // ---------------------------
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
+  onsole.log("🔥 JOYJOY LLM 서버 시작됨!");
   console.log(`✅ Server listening on port ${PORT}`);
 });
