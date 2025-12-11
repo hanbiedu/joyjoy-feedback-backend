@@ -264,6 +264,6 @@ app.post("/api/feedback", (req, res) => {
 // ---------------------------
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
-  onsole.log("🔥 JOYJOY LLM 서버 시작됨!");
+  console.log("🔥 JOYJOY LLM 서버 시작됨!");
   console.log(`✅ Server listening on port ${PORT}`);
 });
