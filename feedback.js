@@ -36,6 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       const result = await response.json();
+
       console.log("서버 응답:", result);
 
       alert("서버 전송 성공!");
@@ -73,20 +74,43 @@ document.addEventListener("DOMContentLoaded", () => {
           body: JSON.stringify(autoData)
         });
 
-        // 디버깅용: 원시 응답 확인 (문제 생기면 주석 해제해서 확인해도 됨)
-        // const rawText = await autoRes.text();
-        // console.log("raw auto-feedback response:", rawText);
-        // const autoResult = JSON.parse(rawText);
 
-        const autoResult = await autoRes.json();
-        console.log("AI 자동 생성 결과:", autoResult);
 
-        // textarea에 자동 생성된 문장 넣기
-        if (autoTextArea && autoResult.autoText) {
-          autoTextArea.value = autoResult.autoText;
+        // 1) 우선 raw 텍스트로 받아서 로그 찍기 (디버깅용)
+        const raw = await autoRes.text();
+        console.log("auto-feedback raw response:", raw);
+
+        // 2) HTTP 에러 상태인 경우
+        if (!autoRes.ok) {
+          alert("AI 자동 생성 요청 중 오류가 발생했어요.");
+          throw new Error(`auto-feedback HTTP error: ${autoRes.status}`);
         }
 
-        // 3단계: 자동 생성 결과 + 점수를 묶어서 /api/feedback 으로 저장
+        // 3) JSON 파싱 (서버가 HTML을 보내는 경우 방어)
+        let autoResult;
+        try {
+          autoResult = JSON.parse(raw);
+        } catch (e) {
+          console.error("auto-feedback JSON 파싱 실패:", e);
+          alert("AI 자동 생성 응답을 해석하는 중 오류가 발생했어요.");
+          throw e;
+        }
+
+        console.log("AI 자동 생성 결과(JSON):", autoResult);
+
+        // 4) LLM 문장 + 백업 문장 중에서 최종 문장 선택
+        const finalText =
+          autoResult.autoText ||      // LLM이 만든 문장
+          autoResult.backupText ||    // 백업: 템플릿 기반 문장
+          "오늘 수업 참여 모습을 정리하는 중 오류가 발생했어요.";
+
+        // textarea에 자동 생성된 문장 넣기
+        if (autoTextArea) {
+          autoTextArea.value = finalText;
+        }
+
+
+        // 5) 자동 생성 결과 + 점수를 묶어서 /api/feedback 으로 저장
         const saveData = {
           childName: autoData.childName,
           ageMonth: autoData.ageMonth,
@@ -106,16 +130,30 @@ document.addEventListener("DOMContentLoaded", () => {
           preview.textContent = JSON.stringify(saveData, null, 2);
         }
 
+        // /api/feedback 으로 저장 요청
         const saveRes = await fetch(`${BACKEND_URL}/api/feedback`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(saveData)
         });
 
-        const saveResult = await saveRes.json();
-        console.log("자동 생성 후 서버 저장 응답:", saveResult);
+        const saveRaw = await saveRes.text();
+        console.log("feedback save raw response:", saveRaw);
 
-        alert("AI 자동 문장 생성 및 서버 저장이 완료되었어요!");
+        let saveResult;
+        try {
+          saveResult = JSON.parse(saveRaw);
+        } catch (e) {
+          console.error("피드백 저장 응답 JSON 파싱 실패:", e);
+          // 저장 결과는 크게 중요하지 않다면 여기서 바로 alert만 띄워도 됨
+        }
+
+        if (!saveRes.ok) {
+          alert("AI 문장은 생성되었지만 서버 저장 중 오류가 발생했어요.");
+        } else {
+          console.log("자동 생성 후 서버 저장 응답:", saveResult);
+          alert("AI 자동 문장 생성 및 서버 저장이 완료되었어요!");
+        }
 
       } catch (err) {
         console.error("AI 자동 생성 또는 저장 중 오류:", err);
