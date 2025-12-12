@@ -6,6 +6,16 @@
 const express = require("express");
 const cors = require("cors");
 const OpenAI = require("openai");
+
+try {
+  require.resolve("openai");
+  console.log("✅ openai 모듈 로드 가능");
+} catch (e) {
+  console.log("❌ openai 모듈 로드 불가", e?.message);
+}
+
+
+
 const feedbackItems = require("./items/feedback_items.json"); // 🔥 경로 주의!
 
 const app = express();
