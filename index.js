@@ -1,10 +1,11 @@
-// index.js - JOYJOY 피드백 백엔드 (LLM + 템플릿)
+// index.js - JOYJOY 피드백 백엔드 (LLM + line2 + options 기반)
 
 // ---------------------------
 // 0) 기본 서버 셋업
 // ---------------------------
 const express = require("express");
 const cors = require("cors");
+const feedbackItems = require("../items/feedback_items.json"); // line1·2·options 정의
 
 const app = express();
 
@@ -12,7 +13,7 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// CORS 허용 (필요하면 도메인 제한 가능)
+// CORS 허용 (필요하면 origin 수정)
 app.use(
   cors({
     origin: "*",
@@ -25,140 +26,120 @@ app.get("/", (req, res) => {
 });
 
 // ---------------------------
-// 1) 피드백 패턴 (템플릿 그대로)
+// 1) 관찰 텍스트 생성 유틸들
 // ---------------------------
-const feedbackPatterns = {
-  item1: {
-    // ① 클레이 촉감 탐색
-    1: "클레이를 만지는 것을 조금 낯설어하면서도 교사의 지원 속에서 천천히 촉감을 경험했어요.",
-    2: "말랑한 촉감을 즐기며 손과 발로 여러 압력을 시도해 보며 촉감 경험을 폭넓게 했어요.",
-    3: "클레이를 스스로 잡고 눌러보며 다양한 모양을 만들 정도로 적극적으로 탐색했어요.",
-    4: "강하게 누르기, 약하게 누르기 등을 스스로 조절하며 촉감과 힘 조절을 아주 안정적으로 보여줬어요.",
-  },
-  item2: {
-    // ② 빨대를 사용해 모양 만들기
-    1: "빨대를 잡는 동작이 아직은 서툴러 교사의 도움이 필요했지만 차분히 따라 해보려는 모습이 있었어요.",
-    2: "빨대를 잡고 동그라미·네모 등 간단한 도형을 만들어 보며 소근육 사용을 연습했어요.",
-    3: "빨대를 적절한 길이로 구부리거나 조합해서 여러 도형을 스스로 만들어 보는 탐색이 잘 되었어요.",
-    4: "기존 도형을 넘어서 자신이 떠올린 모양까지 표현하며 손 조절과 공간 감각이 매우 풍부하게 나타났어요.",
-  },
-  item3: {
-    // ③ 쿠키틀로 모양 찍기
-    1: "쿠키틀을 클레이 위에 올려두는 정도로 시도하며 활동에 서서히 익숙해졌어요.",
-    2: "교사의 안내에 따라 쿠키틀을 꾹 눌러 모양을 찍어보며 도형 변화를 경험했어요.",
-    3: "여러 번 눌러보며 모양이 생기고 사라지는 과정을 즐기며 반복 놀이터를 만들었어요.",
-    4: "쿠키틀을 바꾸어 쓰거나 겹쳐 쓰는 등 자신만의 규칙으로 모양 변화를 적극적으로 시도했어요.",
-  },
-  item4: {
-    // ④ 교재 위에 모양 붙이기
-    1: "어디에 붙일지 고민하는 시간이 필요해 교사의 제안을 따라 붙여보는 정도로 참여했어요.",
-    2: "교재의 그림을 보며 ‘여기에 붙여볼까?’ 하고 말로 확인하며 붙이는 경험을 했어요.",
-    3: "위·아래, 안·밖 등을 스스로 구분하며 적절한 위치를 찾아 모양을 배치했어요.",
-    4: "구성 전체를 살피며 균형 있게 붙이고 싶은 위치를 계획하는 모습이 보여 공간 구성력이 돋보였어요.",
-  },
-  item5: {
-    // ⑤ 클레이 색 섞기 & 꾸미기
-    1: "두 색을 섞는 과정이 아직 낯설어 살짝 만져보는 정도로 관찰 위주의 참여를 했어요.",
-    2: "색을 비비며 ‘색이 변했네!’를 함께 확인하며 색 변화에 흥미를 보였어요.",
-    3: "원하는 색이 나올 때까지 섞어 보고, 나온 색으로 자유롭게 장식하는 모습을 보였어요.",
-    4: "색을 섞어 새로운 색을 만들고, 작품 전체 톤까지 고려해 꾸미는 등 표현력이 매우 풍부했어요.",
-  },
-  item6: {
-    // ⑥ 지점토로 크리스마스 티라이트 홀더 만들기
-    1: "지점토 촉감과 작업이 아직 낯설어 작은 부분만 만져보며 천천히 적응했어요.",
-    2: "클레이와 지점토를 비교해 보며 차이를 느끼고, 교사의 도움으로 트리 모양을 완성해 보았어요.",
-    3: "혼자서도 트리 모양을 만들고 구멍을 뚫는 과정을 잘 따라가며 작업 순서를 이해했어요.",
-    4: "트리 모양, 구멍 위치, 장식까지 스스로 계획해 자신만의 티라이트 홀더를 완성하는 집중력이 뛰어났어요.",
-  },
-};
 
-function normalizeScore4(score) {
-  const n = Number(score);
-  if (Number.isNaN(n)) return null;
-  if (n < 1) return 1;
-  if (n > 4) return 4;
-  return n;
+// itemId와 선택 value로 feedback_items.json 안의 옵션 라벨 찾기
+function getSelectedOptionLabel(itemId, value) {
+  const key = `item${itemId}`;
+  const meta = feedbackItems[key];
+  if (!meta || !meta.options) return "";
+  const opt = meta.options.find((o) => String(o.value) === String(value));
+  return opt ? opt.label : "";
 }
 
-// 점수 기반 요약 리스트 만들기 (LLM에 넘길 재료)
-function buildSummaryFromPatterns(data) {
-  const summaries = [];
-  const order = ["item1", "item2", "item3", "item4", "item5", "item6"];
+// 각 활동별 line2 + 선택 옵션 문장을 합쳐 "관찰 내용" 만들기
+function buildActivitiesText(ageMonth, items) {
+  return items
+    .map((it, idx) => {
+      const key = `item${it.id}`;
+      const meta = feedbackItems[key];
+      if (!meta) return "";
 
-  order.forEach((key) => {
-    const rawScore = data[key];
-    if (rawScore === undefined || rawScore === null || rawScore === "") return;
+      const optionLabel = getSelectedOptionLabel(it.id, it.value);
+      // line2 + 선택 옵션 라벨을 합쳐 관찰 내용으로 사용
+      const baseText = `${meta.line2} ${optionLabel}`.trim();
 
-    const score = normalizeScore4(rawScore);
-    if (!score) return;
-
-    const patterns = feedbackPatterns[key];
-    if (!patterns) return;
-
-    const sentence = patterns[score];
-    if (!sentence) return;
-
-    summaries.push(sentence);
-  });
-
-  return summaries;
+      return `${idx + 1}. ${meta.line1}
+- 관찰 내용: ${baseText}
+- 선택 수준(level): ${it.value}`;
+    })
+    .filter(Boolean)
+    .join("\n\n");
 }
 
-// 템플릿만으로 만드는 기본 문장 (LLM 실패시 백업용)
-function buildRuleBasedText(data, summaries) {
+// LLM 프롬프트용 전체 입력 텍스트 만들기
+function buildLLMPrompt(data) {
   const name = data.childName || "아이";
   const ageMonth = data.ageMonth ? Number(data.ageMonth) : null;
+  const items = Array.isArray(data.items) ? data.items : [];
+
+  const activitiesText = buildActivitiesText(ageMonth, items);
 
   const header = ageMonth
-    ? `${ageMonth}개월 ${name}의 오늘 클레이 크리스마스 티라이트 수업 참여 모습을 정리해 보았어요.`
-    : `${name}의 오늘 클레이 크리스마스 티라이트 수업 참여 모습을 정리해 보았어요.`;
+    ? `${ageMonth}개월 아동 "${name}"의 오늘 수업 참여 모습이야.`
+    : `아동 "${name}"의 오늘 수업 참여 모습이야.`;
 
-  if (!summaries || summaries.length === 0) {
-    return header;
-  }
+  const guide = `
+너는 영유아 오감·발달 놀이 전문 브랜드 "조이조이"의 발달전문가야.
 
-  return `${header}\n\n${summaries.map((s) => `● ${s}`).join("\n\n")}`;
+[역할]
+- 부모에게 보내는 수업 후 발달 피드백 문장을 작성한다.
+- 입력으로 각 활동의 제목(line1), 활동 설명(line2), 그리고 교사가 선택한 관찰 문장(옵션 라벨)이 주어진다.
+- 이 관찰 내용을 바탕으로, 아이의 월령을 고려해 현재 발달 수준과 강점을 설명한다.
+- 숫자(level 1~4)는 직접 언급하지 말고, "아직 경험을 쌓는 단계", "또래 수준", "또래보다 적극적"처럼 자연스러운 표현으로만 간접적으로 반영한다.
+- 발달이 아직 미성숙한 부분은 "조금 더 연습이 필요한 모습", "천천히 도와주면 좋아요"처럼 긍정적인 표현으로 설명한다.
+- 문체는 "~했어요", "~보였어요"와 같은 보고서 톤의 한국어 존댓말을 사용한다.
+- 전체 출력은 2~3개의 단락으로 작성하고, 각 단락은 2~4문장 정도로 한다.
+- 마지막에 가정에서 해볼 수 있는 아주 간단한 놀이·격려 문장을 한 줄 정도로 제안한다.
+
+[아동 정보]
+- 이름: ${name}
+- 월령: ${ageMonth ? ageMonth + "개월" : "월령 정보 없음"}
+
+[활동별 관찰 내용]
+${activitiesText}
+
+위 정보를 바탕으로, 부모님께 전달할 오늘의 맞춤 발달 피드백(line4 역할의 분석 텍스트)을 작성해줘.
+`;
+
+  return `${header}\n\n${guide}`;
+}
+
+// 템플릿 기반 백업용 문장 (LLM 실패 시 사용)
+function buildFallbackText(data) {
+  const name = data.childName || "아이";
+  const ageMonth = data.ageMonth ? Number(data.ageMonth) : null;
+  const items = Array.isArray(data.items) ? data.items : [];
+
+  const header = ageMonth
+    ? `${ageMonth}개월 ${name}의 오늘 수업 참여 모습을 정리해 보았어요.`
+    : `${name}의 오늘 수업 참여 모습을 정리해 보았어요.`;
+
+  const bullets = items
+    .map((it) => {
+      const key = `item${it.id}`;
+      const meta = feedbackItems[key];
+      if (!meta) return "";
+
+      const optionLabel = getSelectedOptionLabel(it.id, it.value);
+      const baseText = `${meta.line2} ${optionLabel}`.trim();
+      return baseText ? `● ${baseText}` : "";
+    })
+    .filter(Boolean);
+
+  if (bullets.length === 0) return header;
+
+  return `${header}\n\n${bullets.join("\n\n")}`;
 }
 
 // ---------------------------
-// 2) OpenAI LLM 호출 함수 (SDK 없이 fetch 사용) - 수정 버전
+// 2) OpenAI LLM 호출 함수 (Responses API 사용)
 // ---------------------------
 async function generateLLMFeedback(data) {
   const apiKey = process.env.OPENAI_API_KEY;
-  const summaries = buildSummaryFromPatterns(data);
-  const fallbackText = buildRuleBasedText(data, summaries);
+  const fallbackText = buildFallbackText(data);
 
   console.log("현재 OPENAI_API_KEY 존재 여부:", !!apiKey);
-  console.log("요약 리스트:", summaries);
 
-  // 키 없으면 바로 템플릿으로
+  // 키가 없으면 바로 템플릿 기반 문장 사용
   if (!apiKey) {
     console.warn("OPENAI_API_KEY가 설정되어 있지 않습니다. 템플릿 문장만 사용합니다.");
     return fallbackText;
   }
 
-  if (!summaries || summaries.length === 0) {
-    return fallbackText;
-  }
-
-  const name = data.childName || "아이";
-  const ageMonth = data.ageMonth ? Number(data.ageMonth) : null;
-
-  const summaryText = summaries.map((s) => `- ${s}`).join("\n");
-
-  const prompt = `
-다음은 ${ageMonth ? ageMonth + "개월 " : ""}${name}의 오늘 수업에서 관찰한 발달 행동 요약이에요.
-이 내용을 바탕으로 부모님께 전달할 수업 피드백을 작성해 주세요.
-
-[관찰 요약]
-${summaryText}
-
-[작성 가이드]
-- 전체 3~5문장 정도로 자연스럽게 이어지는 글로 작성해 주세요.
-- 아이의 장점과 성장 가능성을 중심으로 부드럽게 표현해 주세요.
-- '못한다, 문제다' 같은 단정적인 표현은 피하고, '~할 수 있도록 도와줄게요.'처럼 제안형 표현을 사용해 주세요.
-- 조이조이 브랜드처럼 따뜻하고 세심한 톤으로, 한국어로 작성해 주세요.
-`;
+  const prompt = buildLLMPrompt(data);
+  console.log("LLM에 보낼 prompt 일부:\n", prompt.slice(0, 500));
 
   try {
     const response = await fetch("https://api.openai.com/v1/responses", {
@@ -179,9 +160,8 @@ ${summaryText}
     }
 
     const result = await response.json();
-    console.log("OpenAI raw response:", JSON.stringify(result, null, 2).slice(0, 1000));
+    console.log("OpenAI raw response (부분):", JSON.stringify(result, null, 2).slice(0, 800));
 
-    // ⚠ 여기서 실제 텍스트를 뽑아야 함
     let llmText;
 
     try {
@@ -206,7 +186,6 @@ ${summaryText}
   }
 }
 
-
 // ---------------------------
 // 3) 자동 피드백 생성 API (LLM + 템플릿)
 // ---------------------------
@@ -214,17 +193,16 @@ app.post("/api/auto-feedback", async (req, res) => {
   try {
     console.log("💥 /api/auto-feedback 호출됨!");
     const data = req.body || {};
-    console.log("auto-feedback 요청 데이터:", data);
+    console.log("auto-feedback 요청 데이터:", JSON.stringify(data, null, 2));
 
-    const summaries = buildSummaryFromPatterns(data);
-    const ruleBasedText = buildRuleBasedText(data, summaries);
+    // 프론트에서 이미 line2 + options 기반 선택값(items: [{id, value}])을 보내줌
     const llmText = await generateLLMFeedback(data);
+    const ruleBasedText = buildFallbackText(data);
 
     return res.json({
       success: true,
-      autoText: llmText, // 프론트에서 textarea에 넣을 문장
-      backupText: ruleBasedText,
-      summaries,
+      autoText: llmText,   // textarea에 넣을 최종 문장
+      backupText: ruleBasedText, // 혹시 모를 백업용
     });
   } catch (err) {
     console.error("/api/auto-feedback 처리 중 에러:", err);
@@ -241,7 +219,7 @@ app.post("/api/auto-feedback", async (req, res) => {
 app.post("/api/feedback", (req, res) => {
   try {
     const data = req.body || {};
-    console.log("피드백 저장 요청 도착:", data);
+    console.log("피드백 저장 요청 도착:", JSON.stringify(data, null, 2));
 
     // TODO: 나중에 여기서 MySQL DB에 INSERT 작업 추가
 
