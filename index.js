@@ -5,7 +5,7 @@
 // ---------------------------
 const express = require("express");
 const cors = require("cors");
-const feedbackItems = require("../items/feedback_items.json"); // 🔥 경로 주의!
+const feedbackItems = require("./items/feedback_items.json"); // 🔥 경로 주의!
 
 const app = express();
 
