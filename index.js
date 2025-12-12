@@ -1,26 +1,22 @@
-// index.js - JOYJOY 피드백 백엔드 (LLM + line2 + options 기반)
+// index.js - JOYJOY 피드백 백엔드 (line2 + options + LLM)
 
 // ---------------------------
 // 0) 기본 서버 셋업
 // ---------------------------
 const express = require("express");
 const cors = require("cors");
-const feedbackItems = require("../items/feedback_items.json"); // line1·2·options 정의
+const feedbackItems = require("../items/feedback_items.json"); // 🔥 경로 주의!
 
 const app = express();
 
-// JSON 파싱
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// CORS 허용 (필요하면 origin 수정)
 app.use(
   cors({
     origin: "*",
   })
 );
 
-// 헬스체크용 기본 라우트
 app.get("/", (req, res) => {
   res.send("JOYJOY Feedback Backend is running.");
 });
@@ -29,7 +25,7 @@ app.get("/", (req, res) => {
 // 1) 관찰 텍스트 생성 유틸들
 // ---------------------------
 
-// itemId와 선택 value로 feedback_items.json 안의 옵션 라벨 찾기
+// 선택된 option 라벨 찾기
 function getSelectedOptionLabel(itemId, value) {
   const key = `item${itemId}`;
   const meta = feedbackItems[key];
@@ -47,7 +43,6 @@ function buildActivitiesText(ageMonth, items) {
       if (!meta) return "";
 
       const optionLabel = getSelectedOptionLabel(it.id, it.value);
-      // line2 + 선택 옵션 라벨을 합쳐 관찰 내용으로 사용
       const baseText = `${meta.line2} ${optionLabel}`.trim();
 
       return `${idx + 1}. ${meta.line1}
@@ -58,7 +53,7 @@ function buildActivitiesText(ageMonth, items) {
     .join("\n\n");
 }
 
-// LLM 프롬프트용 전체 입력 텍스트 만들기
+// LLM에 넘길 프롬프트 만들기
 function buildLLMPrompt(data) {
   const name = data.childName || "아이";
   const ageMonth = data.ageMonth ? Number(data.ageMonth) : null;
@@ -96,7 +91,7 @@ ${activitiesText}
   return `${header}\n\n${guide}`;
 }
 
-// 템플릿 기반 백업용 문장 (LLM 실패 시 사용)
+// LLM 실패 시 템플릿 기반 백업문
 function buildFallbackText(data) {
   const name = data.childName || "아이";
   const ageMonth = data.ageMonth ? Number(data.ageMonth) : null;
@@ -119,12 +114,11 @@ function buildFallbackText(data) {
     .filter(Boolean);
 
   if (bullets.length === 0) return header;
-
   return `${header}\n\n${bullets.join("\n\n")}`;
 }
 
 // ---------------------------
-// 2) OpenAI LLM 호출 함수 (Responses API 사용)
+// 2) OpenAI LLM 호출 (Responses API)
 // ---------------------------
 async function generateLLMFeedback(data) {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -132,7 +126,7 @@ async function generateLLMFeedback(data) {
 
   console.log("현재 OPENAI_API_KEY 존재 여부:", !!apiKey);
 
-  // 키가 없으면 바로 템플릿 기반 문장 사용
+  // 키 없으면 바로 템플릿
   if (!apiKey) {
     console.warn("OPENAI_API_KEY가 설정되어 있지 않습니다. 템플릿 문장만 사용합니다.");
     return fallbackText;
@@ -187,7 +181,7 @@ async function generateLLMFeedback(data) {
 }
 
 // ---------------------------
-// 3) 자동 피드백 생성 API (LLM + 템플릿)
+// 3) 자동 피드백 생성 API
 // ---------------------------
 app.post("/api/auto-feedback", async (req, res) => {
   try {
@@ -195,14 +189,13 @@ app.post("/api/auto-feedback", async (req, res) => {
     const data = req.body || {};
     console.log("auto-feedback 요청 데이터:", JSON.stringify(data, null, 2));
 
-    // 프론트에서 이미 line2 + options 기반 선택값(items: [{id, value}])을 보내줌
     const llmText = await generateLLMFeedback(data);
     const ruleBasedText = buildFallbackText(data);
 
     return res.json({
       success: true,
-      autoText: llmText,   // textarea에 넣을 최종 문장
-      backupText: ruleBasedText, // 혹시 모를 백업용
+      autoText: llmText,
+      backupText: ruleBasedText,
     });
   } catch (err) {
     console.error("/api/auto-feedback 처리 중 에러:", err);
@@ -214,14 +207,14 @@ app.post("/api/auto-feedback", async (req, res) => {
 });
 
 // ---------------------------
-// 4) 피드백 저장 API (현재는 콘솔 로그 + 성공 응답만)
+// 4) 피드백 저장 API (현재는 콘솔 로그만)
 // ---------------------------
 app.post("/api/feedback", (req, res) => {
   try {
     const data = req.body || {};
     console.log("피드백 저장 요청 도착:", JSON.stringify(data, null, 2));
 
-    // TODO: 나중에 여기서 MySQL DB에 INSERT 작업 추가
+    // TODO: 나중에 여기서 DB 저장 추가
 
     return res.json({
       success: true,
