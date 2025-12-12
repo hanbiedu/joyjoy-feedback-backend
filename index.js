@@ -5,9 +5,12 @@
 // ---------------------------
 const express = require("express");
 const cors = require("cors");
+const OpenAI = require("openai");
 const feedbackItems = require("./items/feedback_items.json"); // 🔥 경로 주의!
 
 const app = express();
+
+// OpenAI SDK는 호출 시점에 client를 생성합니다(키 누락/갱신 이슈 방지)
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -54,41 +57,43 @@ function buildActivitiesText(ageMonth, items) {
 }
 
 // LLM에 넘길 프롬프트 만들기
-function buildLLMPrompt(data) {
-  const name = data.childName || "아이";
-  const ageMonth = data.ageMonth ? Number(data.ageMonth) : null;
-  const items = Array.isArray(data.items) ? data.items : [];
+// ---------------------------
+// 1) LLM 프롬프트 v1.2 (발달 맥락 문단 전용)
+//    - LLM은 "문단 3문장"만 생성
+//    - 제목(①...) + line2는 서버가 고정 출력
+// ---------------------------
+const DEV_PARA_INSTRUCTIONS_V12 = `
+너는 조이조이(JoyJoy) 수업 피드백에서 ‘월령 기반 발달 맥락 해석 문단’만 작성하는 AI다.
 
-  const activitiesText = buildActivitiesText(ageMonth, items);
+입력으로 주어지는 line2, line3은 이미 교사가 작성·선택한 ‘관찰 사실’이다.
+이 내용을 바탕으로, 해당 월령의 일반적인 발달 흐름 속에서 아이의 현재 모습을 ‘안심·설명’하는 문단을 작성한다.
 
-  const header = ageMonth
-    ? `${ageMonth}개월 아동 "${name}"의 오늘 수업 참여 모습이야.`
-    : `아동 "${name}"의 오늘 수업 참여 모습이야.`;
+[출력 규칙 – 매우 중요]
+- 반드시 3문장으로 작성한다.
+- 문장마다 줄바꿈 1회 사용한다(총 3줄).
+- 제목, 번호, 인삿말, 마무리 멘트는 쓰지 않는다.
+- 오직 ‘발달 맥락 설명 문단’만 출력한다.
 
-  const guide = `
-너는 영유아 오감·발달 놀이 전문 브랜드 "조이조이"의 발달전문가야.
+[금지]
+- 진단/검사/치료/지연/장애/ADHD/자폐 등 의료·평가 표현 금지
+- 또래 대비 우열/비교 표현 금지
+- 불안 유발 표현(걱정/문제/이상/부족 등) 금지
 
-[역할]
-- 부모에게 보내는 수업 후 발달 피드백 문장을 작성한다.
-- 입력으로 각 활동의 제목(line1), 활동 설명(line2), 그리고 교사가 선택한 관찰 문장(옵션 라벨)이 주어진다.
-- 이 관찰 내용을 바탕으로, 아이의 월령을 고려해 현재 발달 수준과 강점을 설명한다.
-- 숫자(level 1~4)는 직접 언급하지 말고, "아직 경험을 쌓는 단계", "또래 수준", "또래보다 적극적"처럼 자연스러운 표현으로만 간접적으로 반영한다.
-- 발달이 아직 미성숙한 부분은 "조금 더 연습이 필요한 모습", "천천히 도와주면 좋아요"처럼 긍정적인 표현으로 설명한다.
-- 문체는 "~했어요", "~보였어요"와 같은 보고서 톤의 한국어 존댓말을 사용한다.
-- 전체 출력은 2~3개의 단락으로 작성하고, 각 단락은 2~4문장 정도로 한다.
-- 마지막에 가정에서 해볼 수 있는 아주 간단한 놀이·격려 문장을 한 줄 정도로 제안한다.
+[표현]
+- “~시기예요”, “~단계로 보여요”, “~경험이 중요해요” 같은 완곡·안심 톤 사용
+- line2, line3에 없는 내용을 추측해 추가하지 않는다
+- 아이 이름은 최대 1회만 자연스럽게 사용한다
 
-[아동 정보]
-- 이름: ${name}
-- 월령: ${ageMonth ? ageMonth + "개월" : "월령 정보 없음"}
-
-[활동별 관찰 내용]
-${activitiesText}
-
-위 정보를 바탕으로, 부모님께 전달할 오늘의 맞춤 발달 피드백(line4 역할의 분석 텍스트)을 작성해줘.
+[문장 구조 가이드]
+1문장: 해당 월령 또래의 일반적 발달 특징 설명
+2문장: line2+line3 관찰을 근거로 아이의 현재 모습 해석
+3문장: 지금 경험의 의미를 긍정적으로 정리
 `;
 
-  return `${header}\n\n${guide}`;
+// (옵션) line3가 비어있을 때를 대비한 안전 문장
+function getSafeLine3(line3) {
+  const t = (line3 || "").trim();
+  return t.length > 0 ? t : "교사의 안내에 따라 천천히 참여해 보였어요.";
 }
 
 // LLM 실패 시 템플릿 기반 백업문
@@ -120,60 +125,98 @@ function buildFallbackText(data) {
 // ---------------------------
 // 2) OpenAI LLM 호출 (Responses API)
 // ---------------------------
+// ---------------------------
+// 2) OpenAI LLM 호출 (SDK + Responses API)
+//    - item별로 "발달 맥락 문단(3문장)"만 생성
+// ---------------------------
+async function generateDevParagraph({ name, ageMonth, line2, line3 }) {
+  // 환경변수 키가 런타임에 설정되는 경우를 대비해, 호출 시점에 재주입
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error("OPENAI_API_KEY가 설정되어 있지 않습니다.");
+  }
+
+    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+  const input = `
+아이 이름: ${name || "아이"}
+월령: ${ageMonth ? `${ageMonth}개월` : "월령 정보 없음"}
+
+line2:
+${line2 || ""}
+
+line3:
+${getSafeLine3(line3)}
+  `.trim();
+
+  const res = await client.responses.create({
+    model: "gpt-4.1-mini",
+    instructions: DEV_PARA_INSTRUCTIONS_V12,
+    input,
+  });
+
+  const para = (res.output_text || "").trim();
+  if (!para) throw new Error("LLM 응답이 비어 있습니다.");
+  return para;
+}
+
+// item 1개 섹션(제목 + line2 + LLM문단) 만들기
+function buildFinalSection({ title, line2, devParagraph }) {
+  return `${title}
+${line2}
+
+${devParagraph}`.trim();
+}
+
 async function generateLLMFeedback(data) {
-  const apiKey = process.env.OPENAI_API_KEY;
   const fallbackText = buildFallbackText(data);
 
-  console.log("현재 OPENAI_API_KEY 존재 여부:", !!apiKey);
+  const name = data.childName || "아이";
+  const ageMonth = data.ageMonth ? Number(data.ageMonth) : null;
+  const items = Array.isArray(data.items) ? data.items : [];
+
+  // 선택된 활동이 없으면 템플릿
+  if (items.length === 0) return fallbackText;
 
   // 키 없으면 바로 템플릿
-  if (!apiKey) {
+  if (!process.env.OPENAI_API_KEY) {
     console.warn("OPENAI_API_KEY가 설정되어 있지 않습니다. 템플릿 문장만 사용합니다.");
     return fallbackText;
   }
 
-  const prompt = buildLLMPrompt(data);
-  console.log("LLM에 보낼 prompt 일부:\n", prompt.slice(0, 500));
-
   try {
-    const response = await fetch("https://api.openai.com/v1/responses", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gpt-4.1-mini",
-        input: prompt,
-      }),
-    });
+    const sections = [];
 
-    if (!response.ok) {
-      console.error("OpenAI API 에러 상태:", response.status, await response.text());
-      return fallbackText;
+    for (const it of items) {
+      const key = `item${it.id}`;
+      const meta = feedbackItems[key];
+      if (!meta) continue;
+
+      const title = meta.line1 || "";
+      const line2 = meta.line2 || "";
+      const line3 = getSelectedOptionLabel(it.id, it.value); // 교사가 고른 문장(옵션 라벨)
+
+      // LLM은 문단만 생성
+      const devParagraph = await generateDevParagraph({
+        name,
+        ageMonth,
+        line2,
+        line3,
+      });
+
+      // 최종 섹션은 서버가 조립 (포맷 고정)
+      sections.push(
+        buildFinalSection({
+          title,
+          line2,
+          devParagraph,
+        })
+      );
     }
 
-    const result = await response.json();
-    console.log("OpenAI raw response (부분):", JSON.stringify(result, null, 2).slice(0, 800));
+    if (sections.length === 0) return fallbackText;
 
-    let llmText;
-
-    try {
-      const outputArray = result.output || [];
-      const messageItem = outputArray.find((item) => item.type === "message");
-      const contentArray = messageItem?.content || [];
-      const textItem = contentArray.find((c) => c.type === "output_text");
-      llmText = textItem?.text?.trim();
-    } catch (e) {
-      console.error("LLM 응답 파싱 중 오류:", e);
-    }
-
-    if (!llmText) {
-      console.warn("LLM 응답에서 텍스트를 찾지 못했습니다. 템플릿 문장을 사용합니다.");
-      return fallbackText;
-    }
-
-    return llmText;
+    // 여러 섹션이면 두 줄 띄워 구분
+    return sections.join("");
   } catch (err) {
     console.error("OpenAI 호출 중 에러:", err);
     return fallbackText;
