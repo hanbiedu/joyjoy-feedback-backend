@@ -135,7 +135,7 @@ async function generateDevParagraph({ name, ageMonth, line2, line3 }) {
     throw new Error("OPENAI_API_KEY가 설정되어 있지 않습니다.");
   }
 
-    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
   const input = `
 아이 이름: ${name || "아이"}
@@ -148,16 +148,44 @@ line3:
 ${getSafeLine3(line3)}
   `.trim();
 
-  const res = await client.responses.create({
-    model: "gpt-4.1-mini",
+  // ✅ 여기서 v1.2 instructions를 실제로 넣는다
+  const resp = await client.responses.create({
+    model: "gpt-4.1-mini-2025-04-14", // 지금 쓰는 모델 유지 가능
     instructions: DEV_PARA_INSTRUCTIONS_V12,
     input,
   });
 
-  const para = (res.output_text || "").trim();
-  if (!para) throw new Error("LLM 응답이 비어 있습니다.");
-  return para;
+  // ✅ SDK/응답 포맷 차이를 견디는 안전 파서
+  return extractOutputText(resp);
 }
+
+
+// ✅ Responses API output에서 output_text를 찾아서 합쳐주는 함수
+function extractOutputText(resp) {
+  if (!resp) return "";
+
+  // 1) 어떤 SDK에선 output_text가 바로 붙기도 함
+  if (typeof resp.output_text === "string" && resp.output_text.trim()) {
+    return resp.output_text.trim();
+  }
+
+  // 2) 표준 Responses 형태: output[] → message → content[] → output_text.text
+  const out = Array.isArray(resp.output) ? resp.output : [];
+  const texts = [];
+
+  for (const item of out) {
+    if (item?.type !== "message") continue;
+    const content = Array.isArray(item.content) ? item.content : [];
+    for (const c of content) {
+      if (c?.type === "output_text" && typeof c.text === "string") {
+        texts.push(c.text);
+      }
+    }
+  }
+
+  return texts.join("\n").trim();
+}
+
 
 // item 1개 섹션(제목 + line2 + LLM문단) 만들기
 function buildFinalSection({ title, line2, devParagraph }) {
@@ -193,7 +221,8 @@ async function generateLLMFeedback(data) {
 
       const title = meta.line1 || "";
       const line2 = meta.line2 || "";
-      const line3 = getSelectedOptionLabel(it.id, it.value); // 교사가 고른 문장(옵션 라벨)
+      const line3 = getSelectedOptionLabel(it.id, it.value) || "교사의 안내에 따라 천천히 참여해 보였어요.";
+
 
       // LLM은 문단만 생성
       const devParagraph = await generateDevParagraph({
@@ -216,7 +245,7 @@ async function generateLLMFeedback(data) {
     if (sections.length === 0) return fallbackText;
 
     // 여러 섹션이면 두 줄 띄워 구분
-    return sections.join("");
+    return sections.join("\n\n");
   } catch (err) {
     console.error("OpenAI 호출 중 에러:", err);
     return fallbackText;
