@@ -72,33 +72,38 @@ function buildActivitiesText(ageMonth, items) {
 //    - LLM은 "문단 3문장"만 생성
 //    - 제목(①...) + line2는 서버가 고정 출력
 // ---------------------------
-const DEV_PARA_INSTRUCTIONS_V12 = `
+const DEV_PARA_BATCH_INSTRUCTIONS_V12 = `
 너는 조이조이(JoyJoy) 수업 피드백에서 ‘월령 기반 발달 맥락 해석 문단’만 작성하는 AI다.
 
-입력으로 주어지는 line2, line3은 이미 교사가 작성·선택한 ‘관찰 사실’이다.
-이 내용을 바탕으로, 해당 월령의 일반적인 발달 흐름 속에서 아이의 현재 모습을 ‘안심·설명’하는 문단을 작성한다.
+[입력]
+- 아동 이름, 월령
+- items: 각 item은 id, title, line2(활동 설명), line3(교사 관찰)로 구성
 
-[출력 규칙 – 매우 중요]
-- 반드시 3문장으로 작성한다.
-- 문장마다 줄바꿈 1회 사용한다(총 3줄).
-- 제목, 번호, 인삿말, 마무리 멘트는 쓰지 않는다.
-- 오직 ‘발달 맥락 설명 문단’만 출력한다.
+[출력 형식: JSON만]
+{
+  "items": [
+    { "id": 1, "devParagraph": "문장1\\n문장2\\n문장3" },
+    ...
+  ]
+}
+
+[출력 규칙]
+- 반드시 JSON만 출력(설명/코드블록/텍스트 금지)
+- 각 devParagraph는 반드시 3문장
+- 각 문장은 줄바꿈 1회로 구분(총 3줄)
+- title/line2/line3 내용을 벗어난 추측 추가 금지
+- 아이 이름은 devParagraph 당 최대 1회 사용(안 써도 됨)
 
 [금지]
-- 진단/검사/치료/지연/장애/ADHD/자폐 등 의료·평가 표현 금지
-- 또래 대비 우열/비교 표현 금지
-- 불안 유발 표현(걱정/문제/이상/부족 등) 금지
+- 진단/검사/치료/지연/장애/ADHD/자폐 등 의료/진단 뉘앙스 금지
+- 또래 대비 우열/비교(“또래보다”, “뛰어남”) 금지
+- 불안 유발 표현(걱정/문제/이상/부족) 금지
 
-[표현]
-- “~시기예요”, “~단계로 보여요”, “~경험이 중요해요” 같은 완곡·안심 톤 사용
-- line2, line3에 없는 내용을 추측해 추가하지 않는다
-- 아이 이름은 최대 1회만 자연스럽게 사용한다
+[표현 톤]
+- 긍정적이고 안정적인 한국어 존댓말
+- 예: “~시기예요.” “~단계로 보여요.” “~경험이 중요해요.”
+`.trim();
 
-[문장 구조 가이드]
-1문장: 해당 월령 또래의 일반적 발달 특징 설명
-2문장: line2+line3 관찰을 근거로 아이의 현재 모습 해석
-3문장: 지금 경험의 의미를 긍정적으로 정리
-`;
 
 // (옵션) line3가 비어있을 때를 대비한 안전 문장
 function getSafeLine3(line3) {
@@ -139,62 +144,79 @@ function buildFallbackText(data) {
 // 2) OpenAI LLM 호출 (SDK + Responses API)
 //    - item별로 "발달 맥락 문단(3문장)"만 생성
 // ---------------------------
-async function generateDevParagraph({ name, ageMonth, line2, line3 }) {
-  // 환경변수 키가 런타임에 설정되는 경우를 대비해, 호출 시점에 재주입
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error("OPENAI_API_KEY가 설정되어 있지 않습니다.");
-  }
+async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM }) {
+  const payload = {
+    childName: name,
+    ageMonth,
+    items: itemsForLLM.map(x => ({
+      id: x.id,
+      title: x.title,
+      line2: x.line2,
+      line3: x.line3,
+    })),
+  };
 
-  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-  const input = `
-아이 이름: ${name || "아이"}
-월령: ${ageMonth ? `${ageMonth}개월` : "월령 정보 없음"}
-
-line2:
-${line2 || ""}
-
-line3:
-${getSafeLine3(line3)}
-  `.trim();
-
-  // ✅ 여기서 v1.2 instructions를 실제로 넣는다
   const resp = await client.responses.create({
-    model: "gpt-4.1-mini-2025-04-14", // 지금 쓰는 모델 유지 가능
-    instructions: DEV_PARA_INSTRUCTIONS_V12,
-    input,
+    model: "gpt-4.1-mini-2025-04-14",
+    instructions: DEV_PARA_BATCH_INSTRUCTIONS_V12,
+    input: JSON.stringify(payload),
+    // 너무 길게 못 쓰게(3문장 * 6개면 120토큰 안팎 충분)
+    max_output_tokens: 300,
   });
 
-  // ✅ SDK/응답 포맷 차이를 견디는 안전 파서
-  return extractOutputText(resp);
+  const text = extractOutputText(resp);
+
+  // JSON 파싱 (실패하면 throw → 상위에서 fallback)
+  const obj = JSON.parse(text);
+  const arr = Array.isArray(obj?.items) ? obj.items : [];
+
+  // id -> devParagraph 맵
+  const map = new Map();
+  for (const it of arr) {
+    const id = Number(it?.id);
+    const dev = typeof it?.devParagraph === "string" ? it.devParagraph.trim() : "";
+    if (!Number.isNaN(id) && dev) map.set(id, normalize3Lines(dev));
+  }
+  return map;
 }
+
+// 3줄 강제(모델이 살짝 흔들려도 안전장치)
+function normalize3Lines(dev) {
+  // 줄 기준으로 자르고 3줄로 맞추기
+  const lines = dev.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+
+  if (lines.length >= 3) return `${lines[0]}\n${lines[1]}\n${lines[2]}`;
+
+  // 줄이 1~2줄이면 문장 단위로 쪼개서 보정
+  const s = dev.replace(/\r?\n/g, " ").trim();
+  const sentences = s.split(/(?<=[.!?]|요\.)\s+/).map(t => t.trim()).filter(Boolean);
+
+  const a = sentences[0] || s;
+  const b = sentences[1] || sentences[0] || s;
+  const c = sentences[2] || sentences[1] || sentences[0] || s;
+
+  return `${a}\n${b}\n${c}`;
+}
+
 
 
 // ✅ Responses API output에서 output_text를 찾아서 합쳐주는 함수
 function extractOutputText(resp) {
   if (!resp) return "";
+  if (typeof resp.output_text === "string" && resp.output_text.trim()) return resp.output_text.trim();
 
-  // 1) 어떤 SDK에선 output_text가 바로 붙기도 함
-  if (typeof resp.output_text === "string" && resp.output_text.trim()) {
-    return resp.output_text.trim();
-  }
-
-  // 2) 표준 Responses 형태: output[] → message → content[] → output_text.text
   const out = Array.isArray(resp.output) ? resp.output : [];
   const texts = [];
-
   for (const item of out) {
     if (item?.type !== "message") continue;
     const content = Array.isArray(item.content) ? item.content : [];
     for (const c of content) {
-      if (c?.type === "output_text" && typeof c.text === "string") {
-        texts.push(c.text);
-      }
+      if (c?.type === "output_text" && typeof c.text === "string") texts.push(c.text);
     }
   }
-
   return texts.join("\n").trim();
 }
+
 
 
 // item 1개 섹션(제목 + line2 + LLM문단) 만들기
@@ -212,55 +234,49 @@ async function generateLLMFeedback(data) {
   const ageMonth = data.ageMonth ? Number(data.ageMonth) : null;
   const items = Array.isArray(data.items) ? data.items : [];
 
-  // 선택된 활동이 없으면 템플릿
   if (items.length === 0) return fallbackText;
 
-  // 키 없으면 바로 템플릿
   if (!process.env.OPENAI_API_KEY) {
     console.warn("OPENAI_API_KEY가 설정되어 있지 않습니다. 템플릿 문장만 사용합니다.");
     return fallbackText;
   }
 
   try {
-    const sections = [];
-
+    // 1) LLM에 보낼 item 목록 구성
+    const itemsForLLM = [];
     for (const it of items) {
       const key = `item${it.id}`;
       const meta = feedbackItems[key];
       if (!meta) continue;
 
-      const title = meta.line1 || "";
-      const line2 = meta.line2 || "";
-      const line3 = getSelectedOptionLabel(it.id, it.value) || "교사의 안내에 따라 천천히 참여해 보였어요.";
-
-
-      // LLM은 문단만 생성
-      const devParagraph = await generateDevParagraph({
-        name,
-        ageMonth,
-        line2,
-        line3,
+      itemsForLLM.push({
+        id: Number(it.id),
+        title: meta.line1 || "",
+        line2: meta.line2 || "",
+        line3: getSelectedOptionLabel(it.id, it.value) || "교사의 안내에 따라 천천히 참여해 보였어요.",
       });
-
-      // 최종 섹션은 서버가 조립 (포맷 고정)
-      sections.push(
-        buildFinalSection({
-          title,
-          line2,
-          devParagraph,
-        })
-      );
     }
 
-    if (sections.length === 0) return fallbackText;
+    if (itemsForLLM.length === 0) return fallbackText;
 
-    // 여러 섹션이면 두 줄 띄워 구분
+    // 2) ✅ 여기서 LLM 1회 호출로 id->devParagraph 맵 받기
+    const devMap = await generateDevParagraphsBatch({ name, ageMonth, itemsForLLM });
+
+    // 3) 서버가 최종 섹션 조립
+    const sections = [];
+    for (const x of itemsForLLM) {
+      const devParagraph = devMap.get(x.id) || normalize3Lines("이 월령의 아이들은 다양한 경험을 통해 감각과 조절 능력을 천천히 키워 가는 시기예요.\n교사의 안내 속에서 활동을 이어가며 스스로 시도하려는 모습이 관찰되었어요.\n반복 경험이 쌓일수록 더 편안하고 자연스럽게 확장될 수 있어요.");
+      sections.push(buildFinalSection({ title: x.title, line2: x.line2, devParagraph }));
+    }
+
+    // ✅ 섹션 구분 줄바꿈
     return sections.join("\n\n");
   } catch (err) {
     console.error("OpenAI 호출 중 에러:", err);
     return fallbackText;
   }
 }
+
 
 // ---------------------------
 // 3) 자동 피드백 생성 API
