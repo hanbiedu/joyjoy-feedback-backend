@@ -1,42 +1,64 @@
-// index.js - JOYJOY 피드백 백엔드 (line2 + options + LLM)
+// index.js - JOYJOY 피드백 백엔드 (todayLesson JSON + todayActivityHtml LLM 1회 + HTML render)
 
-// ---------------------------
-// 0) 기본 서버 셋업
-// ---------------------------
 const express = require("express");
 const cors = require("cors");
 const OpenAI = require("openai");
+const fs = require("fs");
+const path = require("path");
 
-try {
-  require.resolve("openai");
-  console.log("✅ openai 모듈 로드 가능");
-} catch (e) {
-  console.log("❌ openai 모듈 로드 불가", e?.message);
-}
-
-
-
-const feedbackItems = require("./items/feedback_items.json"); // 🔥 경로 주의!
+const feedbackItems = require("./items/feedback_items.json"); // 🔥 경로 확인
 
 const app = express();
 
-// OpenAI SDK는 호출 시점에 client를 생성합니다(키 누락/갱신 이슈 방지)
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(
-  cors({
-    origin: "*",
-  })
-);
-
-app.get("/", (req, res) => {
-  res.send("JOYJOY Feedback Backend is running.");
-});
+app.use(cors({ origin: "*" }));
 
 // ---------------------------
-// 1) 관찰 텍스트 생성 유틸들
+// 0) OpenAI Client
 // ---------------------------
+function getOpenAIClient() {
+  if (!process.env.OPENAI_API_KEY) return null;
+  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+}
+
+// ---------------------------
+// 1) 공통 유틸
+// ---------------------------
+function escapeHtml(s = "") {
+  return String(s)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function safeParseJsonFromText(s) {
+  if (!s) throw new Error("Empty model output");
+  const text = String(s).trim();
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  if (start === -1 || end === -1 || end <= start) {
+    throw new Error("No JSON object found in model output");
+  }
+  const jsonOnly = text.slice(start, end + 1);
+  return JSON.parse(jsonOnly);
+}
+
+// <br>만 허용, 다른 태그 제거 (보수적 sanitize)
+function sanitizeBrOnly(html = "") {
+  const t = String(html || "");
+  return t
+    .replace(/<(?!br\s*\/?>)[^>]+>/gi, "") // <br> 제외 태그 제거
+    .replace(/\r?\n/g, ""); // 줄바꿈 제거
+}
+
+// (옵션) line3가 비어있을 때 안전 문장
+function getSafeLine3(line3) {
+  const t = (line3 || "").trim();
+  return t.length > 0 ? t : "교사의 안내에 따라 천천히 참여해 보였어요.";
+}
 
 // 선택된 option 라벨 찾기
 function getSelectedOptionLabel(itemId, value) {
@@ -47,30 +69,9 @@ function getSelectedOptionLabel(itemId, value) {
   return opt ? opt.label : "";
 }
 
-// 각 활동별 line2 + 선택 옵션 문장을 합쳐 "관찰 내용" 만들기
-function buildActivitiesText(ageMonth, items) {
-  return items
-    .map((it, idx) => {
-      const key = `item${it.id}`;
-      const meta = feedbackItems[key];
-      if (!meta) return "";
-
-      const optionLabel = getSelectedOptionLabel(it.id, it.value);
-      const baseText = `${meta.line2} ${optionLabel}`.trim();
-
-      return `${idx + 1}. ${meta.line1}
-- 관찰 내용: ${baseText}
-- 선택 수준(level): ${it.value}`;
-    })
-    .filter(Boolean)
-    .join("\n\n");
-}
-
-// LLM에 넘길 프롬프트 만들기
 // ---------------------------
-// 1) LLM 프롬프트 v1.2 (발달 맥락 문단 전용)
-//    - LLM은 "문단 3문장"만 생성
-//    - 제목(①...) + line2는 서버가 고정 출력
+// 2) (기존) DevParagraph 생성용 LLM 프롬프트/함수
+//     - /api/auto-feedback 용
 // ---------------------------
 const DEV_PARA_BATCH_INSTRUCTIONS_V12 = `
 [출력 규칙]
@@ -81,6 +82,7 @@ const DEV_PARA_BATCH_INSTRUCTIONS_V12 = `
 - 각 문장은 줄바꿈 1회로 구분(총 3줄)
 - title/line2/line3 내용을 벗어난 추측 추가 금지
 - 아이 이름은 devParagraph 당 최대 1회 사용(안 써도 됨)
+- label/value는 내부 점수이며, 어떤 문장에도 2: 같은 점수 표기를 절대 출력하지 않는다.
 
 너는 조이조이(JoyJoy) 수업 피드백에서 ‘월령 기반 발달 맥락 해석 문단’만 작성하는 AI다.
 
@@ -96,8 +98,6 @@ const DEV_PARA_BATCH_INSTRUCTIONS_V12 = `
   ]
 }
 
-
-
 [금지]
 - 진단/검사/치료/지연/장애/ADHD/자폐 등 의료/진단 뉘앙스 금지
 - 또래 대비 우열/비교(“또래보다”, “뛰어남”) 금지
@@ -108,11 +108,33 @@ const DEV_PARA_BATCH_INSTRUCTIONS_V12 = `
 - 예: “~시기예요.” “~단계로 보여요.” “~경험이 중요해요.”
 `.trim();
 
+// 3줄 강제 보정
+function normalize3Lines(dev) {
+  const lines = String(dev || "")
+    .split(/\r?\n/)
+    .map((s) => s.trim())
+    .filter(Boolean);
 
-// (옵션) line3가 비어있을 때를 대비한 안전 문장
-function getSafeLine3(line3) {
-  const t = (line3 || "").trim();
-  return t.length > 0 ? t : "교사의 안내에 따라 천천히 참여해 보였어요.";
+  if (lines.length >= 3) return `${lines[0]}\n${lines[1]}\n${lines[2]}`;
+
+  const s = String(dev || "").replace(/\r?\n/g, " ").trim();
+  const sentences = s
+    .split(/(?<=[.!?]|요\.)\s+/)
+    .map((t) => t.trim())
+    .filter(Boolean);
+
+  const a = sentences[0] || s;
+  const b = sentences[1] || sentences[0] || s;
+  const c = sentences[2] || sentences[1] || sentences[0] || s;
+  return `${a}\n${b}\n${c}`;
+}
+
+// item 1개 섹션(제목 + line2 + LLM문단) 만들기
+function buildFinalSection({ title, line2, devParagraph }) {
+  return `${title}
+${line2}
+
+${devParagraph}`.trim();
 }
 
 // LLM 실패 시 템플릿 기반 백업문
@@ -141,18 +163,9 @@ function buildFallbackText(data) {
   return `${header}\n\n${bullets.join("\n\n")}`;
 }
 
-// ---------------------------
-// 2) OpenAI LLM 호출 (Responses API)
-// ---------------------------
-// ---------------------------
-// 2) OpenAI LLM 호출 (SDK + Responses API)
-//    - item별로 "발달 맥락 문단(3문장)"만 생성
-// ---------------------------
 async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM }) {
-  console.log("🔥 generateDevParagraphsBatch HIT", process.env.RENDER_GIT_COMMIT);
-
-  // ✅ OpenAI client 생성(스코프 문제 해결)
-  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  const client = getOpenAIClient();
+  if (!client) throw new Error("OPENAI_API_KEY missing");
 
   const payload = {
     childName: name,
@@ -165,9 +178,8 @@ async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM }) {
     })),
   };
 
-  const resp = await client.responses.create({
+  const requestOptions = {
     model: "gpt-4.1-mini-2025-04-14",
-
     input: [
       {
         role: "system",
@@ -187,8 +199,6 @@ async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM }) {
         content: [{ type: "input_text", text: JSON.stringify(payload) }],
       },
     ],
-
-    // ✅ 너의 파싱(it.id / it.devParagraph)과 100% 일치하는 스키마로 고정
     text: {
       format: {
         type: "json_schema",
@@ -209,36 +219,29 @@ async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM }) {
                 required: ["id", "devParagraph"],
                 properties: {
                   id: { type: "integer" },
-                  devParagraph: { type: "string" }
-                }
-              }
-            }
-          }
-        }
-      }
+                  devParagraph: { type: "string" },
+                },
+              },
+            },
+          },
+        },
+      },
     },
-    
-
-    // 6개 × 3문장이라 300은 빠듯할 수 있어 약간 여유
     max_output_tokens: 900,
-  });
+  };
 
-  // ✅ output_text 직파싱 (extractOutputText 불필요)
-  // const jsonText = (resp.output_text || "").trim();
-  // if (!jsonText) throw new Error("Empty output_text");
-  // const obj = JSON.parse(jsonText);
-
-  const raw = (resp.output_text || "");
-  
-
-
-  console.log("🧾 resp.output_text length:", raw.length);
-  console.log("🧾 resp.output_text head:", raw.slice(0, 200));
-  console.log("🧾 resp.output_text tail:", raw.slice(-200));
+  let raw = "";
+  try {
+    const resp = await client.responses.create(requestOptions);
+    raw = resp.output_text || "";
+  } catch (e) {
+    console.error("❌ generateDevParagraphsBatch first call failed:", e);
+    // 1회 재시도
+    const resp2 = await client.responses.create(requestOptions);
+    raw = resp2.output_text || "";
+  }
 
   const obj = safeParseJsonFromText(raw);
-  
-
   const arr = Array.isArray(obj?.items) ? obj.items : [];
 
   const map = new Map();
@@ -250,67 +253,21 @@ async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM }) {
   return map;
 }
 
-function safeParseJsonFromText(s) {
-  if (!s) throw new Error("Empty model output");
-  const text = s.trim();
-
-  const start = text.indexOf("{");
-  const end = text.lastIndexOf("}");
-  if (start === -1 || end === -1 || end <= start) {
-    throw new Error("No JSON object found in model output");
-  }
-
-  const jsonOnly = text.slice(start, end + 1);
-  return JSON.parse(jsonOnly);
-}
-
-
-
-
-// 3줄 강제(모델이 살짝 흔들려도 안전장치)
-function normalize3Lines(dev) {
-  // 줄 기준으로 자르고 3줄로 맞추기
-  const lines = dev.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-
-  if (lines.length >= 3) return `${lines[0]}\n${lines[1]}\n${lines[2]}`;
-
-  // 줄이 1~2줄이면 문장 단위로 쪼개서 보정
-  const s = dev.replace(/\r?\n/g, " ").trim();
-  const sentences = s.split(/(?<=[.!?]|요\.)\s+/).map(t => t.trim()).filter(Boolean);
-
-  const a = sentences[0] || s;
-  const b = sentences[1] || sentences[0] || s;
-  const c = sentences[2] || sentences[1] || sentences[0] || s;
-
-  return `${a}\n${b}\n${c}`;
-}
-
-
-
-// item 1개 섹션(제목 + line2 + LLM문단) 만들기
-function buildFinalSection({ title, line2, devParagraph }) {
-  return `${title}
-${line2}
-
-${devParagraph}`.trim();
-}
-
 async function generateLLMFeedback(data) {
   const fallbackText = buildFallbackText(data);
 
   const name = data.childName || "아이";
   const ageMonth = data.ageMonth ? Number(data.ageMonth) : null;
   const items = Array.isArray(data.items) ? data.items : [];
-
   if (items.length === 0) return fallbackText;
 
-  if (!process.env.OPENAI_API_KEY) {
+  const client = getOpenAIClient();
+  if (!client) {
     console.warn("OPENAI_API_KEY가 설정되어 있지 않습니다. 템플릿 문장만 사용합니다.");
     return fallbackText;
   }
 
   try {
-    // 1) LLM에 보낼 item 목록 구성
     const itemsForLLM = [];
     for (const it of items) {
       const key = `item${it.id}`;
@@ -321,23 +278,25 @@ async function generateLLMFeedback(data) {
         id: Number(it.id),
         title: meta.line1 || "",
         line2: meta.line2 || "",
-        line3: getSelectedOptionLabel(it.id, it.value) || "교사의 안내에 따라 천천히 참여해 보였어요.",
+        line3: getSelectedOptionLabel(it.id, it.value) || getSafeLine3(""),
       });
     }
 
     if (itemsForLLM.length === 0) return fallbackText;
 
-    // 2) ✅ 여기서 LLM 1회 호출로 id->devParagraph 맵 받기
     const devMap = await generateDevParagraphsBatch({ name, ageMonth, itemsForLLM });
 
-    // 3) 서버가 최종 섹션 조립
     const sections = [];
     for (const x of itemsForLLM) {
-      const devParagraph = devMap.get(x.id) || normalize3Lines("이 월령의 아이들은 다양한 경험을 통해 감각과 조절 능력을 천천히 키워 가는 시기예요.\n교사의 안내 속에서 활동을 이어가며 스스로 시도하려는 모습이 관찰되었어요.\n반복 경험이 쌓일수록 더 편안하고 자연스럽게 확장될 수 있어요.");
+      const devParagraph =
+        devMap.get(x.id) ||
+        normalize3Lines(
+          "이 월령의 아이들은 다양한 경험을 통해 감각과 조절 능력을 천천히 키워 가는 시기예요.\n교사의 안내 속에서 활동을 이어가며 스스로 시도하려는 모습이 관찰되었어요.\n반복 경험이 쌓일수록 더 편안하고 자연스럽게 확장될 수 있어요."
+        );
+
       sections.push(buildFinalSection({ title: x.title, line2: x.line2, devParagraph }));
     }
 
-    // ✅ 섹션 구분 줄바꿈
     return sections.join("\n\n");
   } catch (err) {
     console.error("OpenAI 호출 중 에러:", err);
@@ -345,16 +304,121 @@ async function generateLLMFeedback(data) {
   }
 }
 
+// ---------------------------
+// 3) (신규) 오늘의 활동 HTML 생성 (LLM 1회)
+//     - /api/feedback/html 용
+// ---------------------------
+const TODAY_ACTIVITY_HTML_INSTRUCTIONS = `
+[출력 규칙]
+- 출력은 반드시 JSON만 반환한다. (다른 텍스트 금지)
+- JSON 형식:
+  { "todayActivityHtml": "..." }
+
+[작성 규칙]
+- 반드시 ①~⑥ 번호를 사용한다.
+- 각 항목은 '제목형식(① ...)' + 1~2문장
+- 줄바꿈은 <br>만 사용 (다른 HTML 태그 금지)
+- 발달 평가/진단/또래 비교/불안 유발 표현 금지
+- 아이 이름/개월수 언급 금지
+- 입력 items의 title(line1)/line2/line3(관찰)만 근거로 작성
+`.trim();
+
+async function generateTodayActivityHtml({ itemsForLLM }) {
+  const client = getOpenAIClient();
+  if (!client) throw new Error("OPENAI_API_KEY missing");
+
+  if (!Array.isArray(itemsForLLM) || itemsForLLM.length === 0) {
+    return "① 오늘 진행한 활동을 정리 중이에요.<br>② 수업 내용을 곧 확인하실 수 있어요.";
+  }
+
+  const payload = {
+    items: itemsForLLM.map((x) => ({
+      id: x.id,
+      title: x.title,
+      line2: x.line2,
+      line3: x.line3,
+    })),
+  };
+
+  const resp = await client.responses.create({
+    model: "gpt-4.1-mini-2025-04-14",
+    input: [
+      {
+        role: "system",
+        content: [{ type: "input_text", text: TODAY_ACTIVITY_HTML_INSTRUCTIONS }],
+      },
+      {
+        role: "user",
+        content: [{ type: "input_text", text: JSON.stringify(payload) }],
+      },
+    ],
+    text: {
+      format: {
+        type: "json_schema",
+        name: "joyjoy_today_activity_html",
+        strict: true,
+        schema: {
+          type: "object",
+          additionalProperties: false,
+          required: ["todayActivityHtml"],
+          properties: {
+            todayActivityHtml: { type: "string" },
+          },
+        },
+      },
+    },
+    max_output_tokens: 700,
+  });
+
+  const raw = resp.output_text || "";
+  const obj = safeParseJsonFromText(raw);
+  return sanitizeBrOnly(obj.todayActivityHtml || "");
+}
 
 // ---------------------------
-// 3) 자동 피드백 생성 API
+// 4) 수업 템플릿(JSON) 로더
+//     templates/text/{month}.json 의 lessons[templateKey]
 // ---------------------------
+function loadLessonByTemplateKey(templateKey) {
+  if (!templateKey || typeof templateKey !== "string") {
+    throw new Error("templateKey가 필요합니다. 예: '12-3'");
+  }
+
+  const monthKeyRaw = templateKey.split("-")[0]; // "12-3" -> "12"
+  if (!/^\d{1,2}$/.test(monthKeyRaw)) {
+    throw new Error(`templateKey 형식이 올바르지 않습니다: ${templateKey}`);
+  }
+
+  const monthKey = String(Number(monthKeyRaw)).padStart(2, "0"); // "1" -> "01"
+  const monthFilePath = path.join(process.cwd(), "templates", "text", `${monthKey}.json`);
+
+  const raw = fs.readFileSync(monthFilePath, "utf-8");
+  const monthJson = JSON.parse(raw);
+
+  const lesson = monthJson?.lessons?.[templateKey];
+  if (!lesson) {
+    throw new Error(`해당 templateKey를 찾을 수 없습니다: ${templateKey} (file: ${monthKey}.json)`);
+  }
+
+  return lesson;
+}
+
+function renderTodayLesson(lesson) {
+  // 문장 1개로 확정
+  return (lesson?.todayLesson?.default || "").trim();
+}
+
+// ---------------------------
+// 5) Routes
+// ---------------------------
+app.get("/", (req, res) => {
+  res.send("JOYJOY Feedback Backend is running.");
+});
+
+// (기존) 자동 피드백 생성 API
 app.post("/api/auto-feedback", async (req, res) => {
   try {
-    console.log("💥 /api/auto-feedback 호출됨!");
     const data = req.body || {};
-    console.log("auto-feedback 요청 데이터:", JSON.stringify(data, null, 2));
-
     const llmText = await generateLLMFeedback(data);
     const ruleBasedText = buildFallbackText(data);
 
@@ -372,16 +436,10 @@ app.post("/api/auto-feedback", async (req, res) => {
   }
 });
 
-// ---------------------------
-// 4) 피드백 저장 API (현재는 콘솔 로그만)
-// ---------------------------
+// (기존) 피드백 저장 API (현재는 수신만)
 app.post("/api/feedback", (req, res) => {
   try {
     const data = req.body || {};
-    console.log("피드백 저장 요청 도착:", JSON.stringify(data, null, 2));
-
-    // TODO: 나중에 여기서 DB 저장 추가
-
     return res.json({
       success: true,
       message: "피드백이 임시로 저장(수신)되었습니다.",
@@ -396,11 +454,64 @@ app.post("/api/feedback", (req, res) => {
   }
 });
 
+// (신규) HTML 생성 API: lessonTitle/todayLesson은 JSON, todayActivity는 LLM 1회
+app.post("/api/feedback/html", async (req, res) => {
+  try {
+    const data = req.body || {};
+    const templateKey = data.templateKey || "12-3";
+
+    // A) 수업 JSON 로드
+    const lesson = loadLessonByTemplateKey(templateKey);
+    const lessonTitle = lesson.lessonTitle || templateKey;
+    const todayLessonText = renderTodayLesson(lesson);
+
+    // B) items -> itemsForLLM 구성
+    const items = Array.isArray(data.items) ? data.items : [];
+    const itemsForLLM = [];
+
+    for (const it of items) {
+      const key = `item${it.id}`;
+      const meta = feedbackItems[key];
+      if (!meta) continue;
+
+      itemsForLLM.push({
+        id: Number(it.id),
+        title: meta.line1 || "",
+        line2: meta.line2 || "",
+        line3: getSelectedOptionLabel(it.id, it.value) || getSafeLine3(""),
+      });
+    }
+
+    // C) 오늘의 활동 HTML (LLM 1회)
+    let todayActivityHtml = "";
+    try {
+      todayActivityHtml = await generateTodayActivityHtml({ itemsForLLM });
+    } catch (e) {
+      console.error("todayActivityHtml LLM 실패:", e);
+      todayActivityHtml = "① 오늘 진행한 활동을 정리 중이에요.<br>② 수업 내용을 곧 확인하실 수 있어요.";
+    }
+
+    // D) HTML 템플릿 로드 & 치환
+    const templatePath = path.join(process.cwd(), "templates", "feedback_template.html");
+    let html = fs.readFileSync(templatePath, "utf-8");
+
+    html = html
+      .replaceAll("{{LESSON_TITLE}}", escapeHtml(lessonTitle))
+      .replaceAll("{{TODAY_LESSON}}", escapeHtml(todayLessonText))
+      .replaceAll("{{TODAY_ACTIVITY}}", todayActivityHtml);
+
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    return res.status(200).send(html);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).send("피드백 HTML 생성 오류");
+  }
+});
+
 // ---------------------------
-// 5) 서버 실행
+// 6) Server Start
 // ---------------------------
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
-  console.log("🔥 JOYJOY LLM 서버 시작됨!");
-  console.log(`✅ Server listening on port ${PORT}`);
+  console.log(`✅ JOYJOY 서버 시작됨: ${PORT}`);
 });
