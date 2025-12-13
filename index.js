@@ -172,7 +172,7 @@ async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM }) {
         role: "system",
         content: [
           {
-            type: "text",
+            type: "input_text",
             text:
               DEV_PARA_BATCH_INSTRUCTIONS_V12 +
               "\n\n" +
@@ -183,7 +183,7 @@ async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM }) {
       },
       {
         role: "user",
-        content: [{ type: "text", text: JSON.stringify(payload) }],
+        content: [{ type: "input_text", text: JSON.stringify(payload) }],
       },
     ],
 
