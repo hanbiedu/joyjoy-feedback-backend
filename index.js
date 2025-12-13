@@ -148,10 +148,13 @@ function buildFallbackText(data) {
 //    - item별로 "발달 맥락 문단(3문장)"만 생성
 // ---------------------------
 async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM }) {
+  // ✅ OpenAI client 생성(스코프 문제 해결)
+  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
   const payload = {
     childName: name,
     ageMonth,
-    items: itemsForLLM.map(x => ({
+    items: itemsForLLM.map((x) => ({
       id: x.id,
       title: x.title,
       line2: x.line2,
@@ -168,23 +171,21 @@ async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM }) {
         content: [
           {
             type: "text",
-            text: DEV_PARA_BATCH_INSTRUCTIONS_V12
-              + "\n\n"
-              + "반드시 JSON만 출력한다. JSON 외 텍스트는 절대 출력하지 않는다."
-          }
-        ]
+            text:
+              DEV_PARA_BATCH_INSTRUCTIONS_V12 +
+              "\n\n" +
+              "반드시 JSON만 출력한다. JSON 외 텍스트는 절대 출력하지 않는다.\n" +
+              "devParagraph에는 숫자 레벨(예: '4:', '3')을 절대 포함하지 마라.",
+          },
+        ],
       },
       {
         role: "user",
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(payload)
-          }
-        ]
-      }
+        content: [{ type: "text", text: JSON.stringify(payload) }],
+      },
     ],
 
+    // ✅ 너의 파싱(it.id / it.devParagraph)과 100% 일치하는 스키마로 고정
     response_format: {
       type: "json_schema",
       json_schema: {
@@ -198,24 +199,42 @@ async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM }) {
             items: {
               type: "array",
               minItems: 1,
-              maxItems: 6,
+              maxItems: 6, // 항상 6개면 6으로 바꿔도 됨
               items: {
                 type: "object",
                 additionalProperties: false,
                 required: ["id", "devParagraph"],
                 properties: {
                   id: { type: "integer" },
-                  devParagraph: { type: "string" }
-                }
-              }
-            }
-          }
-        }
-      }
+                  devParagraph: { type: "string" },
+                },
+              },
+            },
+          },
+        },
+      },
     },
 
+    // 6개 × 3문장이라 300은 빠듯할 수 있어 약간 여유
     max_output_tokens: 450,
   });
+
+  // ✅ output_text 직파싱 (extractOutputText 불필요)
+  const jsonText = (resp.output_text || "").trim();
+  if (!jsonText) throw new Error("Empty output_text");
+  const obj = JSON.parse(jsonText);
+
+  const arr = Array.isArray(obj?.items) ? obj.items : [];
+
+  const map = new Map();
+  for (const it of arr) {
+    const id = Number(it?.id);
+    const dev = typeof it?.devParagraph === "string" ? it.devParagraph.trim() : "";
+    if (!Number.isNaN(id) && dev) map.set(id, normalize3Lines(dev));
+  }
+  return map;
+}
+
 
 
   const jsonText = (resp.output_text || "").trim();
