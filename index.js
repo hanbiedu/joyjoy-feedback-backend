@@ -74,6 +74,7 @@ function buildActivitiesText(ageMonth, items) {
 // ---------------------------
 const DEV_PARA_BATCH_INSTRUCTIONS_V12 = `
 [출력 규칙]
+- 출력은 반드시 한 줄(JSON 한 덩어리)로만 반환한다. 줄바꿈을 포함하지 않는다.
 - JSON 이외의 텍스트를 출력하면 실패다.
 - 제목, 활동 설명, 번호, 불릿, 레벨 숫자(1~4)는 절대 작성하지 마라.
 - 오직 devParagraph(3문장, 3줄)만 작성하라.
@@ -219,13 +220,24 @@ async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM }) {
     
 
     // 6개 × 3문장이라 300은 빠듯할 수 있어 약간 여유
-    max_output_tokens: 450,
+    max_output_tokens: 900,
   });
 
   // ✅ output_text 직파싱 (extractOutputText 불필요)
-  const jsonText = (resp.output_text || "").trim();
-  if (!jsonText) throw new Error("Empty output_text");
-  const obj = JSON.parse(jsonText);
+  // const jsonText = (resp.output_text || "").trim();
+  // if (!jsonText) throw new Error("Empty output_text");
+  // const obj = JSON.parse(jsonText);
+
+  const raw = (resp.output_text || "");
+  const obj = safeParseJsonFromText(raw);
+
+
+  console.log("🧾 resp.output_text length:", raw.length);
+  console.log("🧾 resp.output_text head:", raw.slice(0, 200));
+  console.log("🧾 resp.output_text tail:", raw.slice(-200));
+
+
+  
 
   const arr = Array.isArray(obj?.items) ? obj.items : [];
 
@@ -237,6 +249,21 @@ async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM }) {
   }
   return map;
 }
+
+function safeParseJsonFromText(s) {
+  if (!s) throw new Error("Empty model output");
+  const text = s.trim();
+
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  if (start === -1 || end === -1 || end <= start) {
+    throw new Error("No JSON object found in model output");
+  }
+
+  const jsonOnly = text.slice(start, end + 1);
+  return JSON.parse(jsonOnly);
+}
+
 
 
 
