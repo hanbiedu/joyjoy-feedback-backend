@@ -237,22 +237,6 @@ async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM }) {
 
 
 
-  const jsonText = (resp.output_text || "").trim();
-  if (!jsonText) throw new Error("Empty output_text");
-  const obj = JSON.parse(jsonText);
-
-  const arr = Array.isArray(obj?.items) ? obj.items : [];
-
-  // id -> devParagraph 맵
-  const map = new Map();
-  for (const it of arr) {
-    const id = Number(it?.id);
-    const dev = typeof it?.devParagraph === "string" ? it.devParagraph.trim() : "";
-    if (!Number.isNaN(id) && dev) map.set(id, normalize3Lines(dev));
-  }
-  return map;
-}
-
 // 3줄 강제(모델이 살짝 흔들려도 안전장치)
 function normalize3Lines(dev) {
   // 줄 기준으로 자르고 3줄로 맞추기
