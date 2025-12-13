@@ -1,0 +1,36 @@
+{
+    
+    "lessons": {
+      "12-1": {
+        "lessonKey": "12-1",
+        "lessonTitle": "수업 제목 12-1",
+        "todayLesson": {
+          "default": 
+            
+            "..."
+          
+        }
+      },
+      "12-2": {
+        "lessonKey": "12-2",
+        "lessonTitle": "수업 제목 12-2",
+        "todayLesson": {
+          "default": 
+            
+            "..."
+          
+        }
+      },
+      "12-3": {
+        "lessonKey": "12-3",
+        "lessonTitle": "말랑말랑 친구들",
+        "todayLesson": {
+          "default": 
+            "오늘 수업은 말랑한 재료를 탐색하며 촉감을 느끼고, 모양을 만들고 완성 작품으로 연결하는 흐름으로 진행했어요. 손으로 누르고 선택하는 과정에서 집중과 조절 경험을 충분히 했답니다."
+          
+        }
+      }
+    }
+  }
+  
+  
