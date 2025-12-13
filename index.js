@@ -191,33 +191,32 @@ async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM }) {
     text: {
       format: {
         type: "json_schema",
-        json_schema: {
-          name: "joyjoy_dev_paragraph_batch",
-          strict: true,
-          schema: {
-            type: "object",
-            additionalProperties: false,
-            required: ["items"],
-            properties: {
+        name: "joyjoy_dev_paragraph_batch",
+        strict: true,
+        schema: {
+          type: "object",
+          additionalProperties: false,
+          required: ["items"],
+          properties: {
+            items: {
+              type: "array",
+              minItems: 1,
+              maxItems: 6,
               items: {
-                type: "array",
-                minItems: 1,
-                maxItems: 6,
-                items: {
-                  type: "object",
-                  additionalProperties: false,
-                  required: ["id", "devParagraph"],
-                  properties: {
-                    id: { type: "integer" },
-                    devParagraph: { type: "string" },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
+                type: "object",
+                additionalProperties: false,
+                required: ["id", "devParagraph"],
+                properties: {
+                  id: { type: "integer" },
+                  devParagraph: { type: "string" }
+                }
+              }
+            }
+          }
+        }
+      }
     },
+    
 
     // 6개 × 3문장이라 300은 빠듯할 수 있어 약간 여유
     max_output_tokens: 450,
