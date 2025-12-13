@@ -229,14 +229,14 @@ async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM }) {
   // const obj = JSON.parse(jsonText);
 
   const raw = (resp.output_text || "");
-  const obj = safeParseJsonFromText(raw);
+  
 
 
   console.log("🧾 resp.output_text length:", raw.length);
   console.log("🧾 resp.output_text head:", raw.slice(0, 200));
   console.log("🧾 resp.output_text tail:", raw.slice(-200));
 
-
+  const obj = safeParseJsonFromText(raw);
   
 
   const arr = Array.isArray(obj?.items) ? obj.items : [];
