@@ -188,27 +188,29 @@ async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM }) {
     ],
 
     // ✅ 너의 파싱(it.id / it.devParagraph)과 100% 일치하는 스키마로 고정
-    response_format: {
-      type: "json_schema",
-      json_schema: {
-        name: "joyjoy_dev_paragraph_batch",
-        strict: true,
-        schema: {
-          type: "object",
-          additionalProperties: false,
-          required: ["items"],
-          properties: {
-            items: {
-              type: "array",
-              minItems: 1,
-              maxItems: 6, // 항상 6개면 6으로 바꿔도 됨
+    text: {
+      format: {
+        type: "json_schema",
+        json_schema: {
+          name: "joyjoy_dev_paragraph_batch",
+          strict: true,
+          schema: {
+            type: "object",
+            additionalProperties: false,
+            required: ["items"],
+            properties: {
               items: {
-                type: "object",
-                additionalProperties: false,
-                required: ["id", "devParagraph"],
-                properties: {
-                  id: { type: "integer" },
-                  devParagraph: { type: "string" },
+                type: "array",
+                minItems: 1,
+                maxItems: 6,
+                items: {
+                  type: "object",
+                  additionalProperties: false,
+                  required: ["id", "devParagraph"],
+                  properties: {
+                    id: { type: "integer" },
+                    devParagraph: { type: "string" },
+                  },
                 },
               },
             },
