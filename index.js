@@ -148,6 +148,8 @@ function buildFallbackText(data) {
 //    - item별로 "발달 맥락 문단(3문장)"만 생성
 // ---------------------------
 async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM }) {
+  console.log("🔥 generateDevParagraphsBatch HIT", process.env.RENDER_GIT_COMMIT);
+
   // ✅ OpenAI client 생성(스코프 문제 해결)
   const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
