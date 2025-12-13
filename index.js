@@ -73,6 +73,14 @@ function buildActivitiesText(ageMonth, items) {
 //    - 제목(①...) + line2는 서버가 고정 출력
 // ---------------------------
 const DEV_PARA_BATCH_INSTRUCTIONS_V12 = `
+[출력 규칙]
+- JSON 이외의 텍스트를 출력하면 실패다.
+- 제목, 활동 설명, 번호, 불릿, 레벨 숫자(1~4)는 절대 작성하지 마라.
+- 오직 devParagraph(3문장, 3줄)만 작성하라.
+- 각 문장은 줄바꿈 1회로 구분(총 3줄)
+- title/line2/line3 내용을 벗어난 추측 추가 금지
+- 아이 이름은 devParagraph 당 최대 1회 사용(안 써도 됨)
+
 너는 조이조이(JoyJoy) 수업 피드백에서 ‘월령 기반 발달 맥락 해석 문단’만 작성하는 AI다.
 
 [입력]
@@ -87,12 +95,7 @@ const DEV_PARA_BATCH_INSTRUCTIONS_V12 = `
   ]
 }
 
-[출력 규칙]
-- 반드시 JSON만 출력(설명/코드블록/텍스트 금지)
-- 각 devParagraph는 반드시 3문장
-- 각 문장은 줄바꿈 1회로 구분(총 3줄)
-- title/line2/line3 내용을 벗어난 추측 추가 금지
-- 아이 이름은 devParagraph 당 최대 1회 사용(안 써도 됨)
+
 
 [금지]
 - 진단/검사/치료/지연/장애/ADHD/자폐 등 의료/진단 뉘앙스 금지
@@ -158,16 +161,67 @@ async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM }) {
 
   const resp = await client.responses.create({
     model: "gpt-4.1-mini-2025-04-14",
-    instructions: DEV_PARA_BATCH_INSTRUCTIONS_V12,
-    input: JSON.stringify(payload),
-    // 너무 길게 못 쓰게(3문장 * 6개면 120토큰 안팎 충분)
-    max_output_tokens: 300,
+
+    input: [
+      {
+        role: "system",
+        content: [
+          {
+            type: "text",
+            text: DEV_PARA_BATCH_INSTRUCTIONS_V12
+              + "\n\n"
+              + "반드시 JSON만 출력한다. JSON 외 텍스트는 절대 출력하지 않는다."
+          }
+        ]
+      },
+      {
+        role: "user",
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(payload)
+          }
+        ]
+      }
+    ],
+
+    response_format: {
+      type: "json_schema",
+      json_schema: {
+        name: "joyjoy_dev_paragraph_batch",
+        strict: true,
+        schema: {
+          type: "object",
+          additionalProperties: false,
+          required: ["items"],
+          properties: {
+            items: {
+              type: "array",
+              minItems: 1,
+              maxItems: 6,
+              items: {
+                type: "object",
+                additionalProperties: false,
+                required: ["id", "devParagraph"],
+                properties: {
+                  id: { type: "integer" },
+                  devParagraph: { type: "string" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    max_output_tokens: 450,
   });
 
-  const text = extractOutputText(resp);
 
-  // JSON 파싱 (실패하면 throw → 상위에서 fallback)
-  const obj = JSON.parse(text);
+  const jsonText = (resp.output_text || "").trim();
+  if (!jsonText) throw new Error("Empty output_text");
+  const obj = JSON.parse(jsonText);
+
   const arr = Array.isArray(obj?.items) ? obj.items : [];
 
   // id -> devParagraph 맵
@@ -196,25 +250,6 @@ function normalize3Lines(dev) {
   const c = sentences[2] || sentences[1] || sentences[0] || s;
 
   return `${a}\n${b}\n${c}`;
-}
-
-
-
-// ✅ Responses API output에서 output_text를 찾아서 합쳐주는 함수
-function extractOutputText(resp) {
-  if (!resp) return "";
-  if (typeof resp.output_text === "string" && resp.output_text.trim()) return resp.output_text.trim();
-
-  const out = Array.isArray(resp.output) ? resp.output : [];
-  const texts = [];
-  for (const item of out) {
-    if (item?.type !== "message") continue;
-    const content = Array.isArray(item.content) ? item.content : [];
-    for (const c of content) {
-      if (c?.type === "output_text" && typeof c.text === "string") texts.push(c.text);
-    }
-  }
-  return texts.join("\n").trim();
 }
 
 
