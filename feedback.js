@@ -1,14 +1,29 @@
 // === line1, line2를 feedback_items.json에서 읽어서 HTML에 채우는 함수들 ===
 async function loadActivityLines() {
   try {
-    const res = await fetch("items/feedback_items.json", { cache: "no-cache" });
+    const jsonPath = getItemsJsonPath();
+    const res = await fetch(jsonPath, { cache: "no-cache" });
+
     if (!res.ok) {
-      console.error("❌ feedback_items.json 요청 실패:", res.status, res.statusText);
+      console.error("❌ items json 요청 실패:", jsonPath, res.status, res.statusText);
       return;
     }
 
+
+
     const data = await res.json();
     console.log("✅ feedback_items.json 로드 완료:", data);
+
+    const lesson = monthly?.lessons?.[lessonKey];
+    if (!lesson) {
+      console.error("주차 키 없음:", lessonKey, "in", jsonPath);
+      return null;
+    }
+
+
+
+
+    
 
     fillActivity("item1", data.item1);
     fillActivity("item2", data.item2);
@@ -19,6 +34,17 @@ async function loadActivityLines() {
   } catch (err) {
     console.error("❌ feedback_items.json 불러오는 중 오류:", err);
   }
+}
+
+
+function getItemsJsonPath() {
+  const p = new URLSearchParams(window.location.search);
+
+  const key = p.get("lesson");//12-3
+  const month = key.split("-")[0];
+  return `items/item.${month}.json`; 
+  // const key = params.get("items"); // 예: 12-3
+  // return key ? `items/${key}.json` : "items/feedback_items.json";
 }
 
 function fillActivity(itemKey, itemData) {
@@ -35,6 +61,8 @@ function fillActivity(itemKey, itemData) {
     optionsContainer.innerHTML = generateRadioButtons(itemKey, itemData.options);
   }
 }
+
+
 
 function generateRadioButtons(name, options) {
   let html = "";
