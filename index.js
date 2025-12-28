@@ -439,7 +439,7 @@ app.post("/api/auto-feedback", async (req, res) => {
       backupText: ruleBasedText,
     });
   } catch (err) {
-  console.error("자동 피드백 생성 에러:", err);
+  console.error("자동 피드백 생성 에러:", err);git 
 
   const debug = String(req.query.debug || "") === "1";  // ✅ debug=1일 때만
   return res.status(500).json({
