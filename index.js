@@ -317,7 +317,7 @@ function loadMonthItems(month) {
 function getSelectedOptionLabelFromPack(pack, itemId, value) {
   const v = String(value ?? "").trim();
   if (!v) return ""; // ✅ 빈 값 방어
-  
+
   const meta = pack[`item${itemId}`];
   if (!meta || !meta.options) return "";
   const opt = meta.options.find(o => String(o.value) === String(value));
@@ -439,12 +439,16 @@ app.post("/api/auto-feedback", async (req, res) => {
       backupText: ruleBasedText,
     });
   } catch (err) {
-    console.error("/api/auto-feedback 처리 중 에러:", err);
-    return res.status(500).json({
-      success: false,
-      message: "자동 피드백 생성 중 오류가 발생했습니다.",
-    });
-  }
+  console.error("자동 피드백 생성 에러:", err);
+
+  const debug = String(req.query.debug || "") === "1";  // ✅ debug=1일 때만
+  return res.status(500).json({
+    success: false,
+    message: "자동 피드백 생성 중 오류가 발생했습니다.",
+    ...(debug ? { debug_error: String(err?.message || err), debug_stack: String(err?.stack || "") } : {}),
+  });
+}
+
 });
 
 // ---------------------------
