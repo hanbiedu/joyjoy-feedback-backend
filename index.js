@@ -285,13 +285,42 @@ ${line2}
 ${devParagraph}`.trim();
 }
 
+
+const fs = require("fs");
+const path = require("path");
+
+const ITEMS_DIR = path.join(__dirname, "items");
+
+function loadMonthItems(month) {
+  const filePath = path.join(ITEMS_DIR, `item${month}.json`);
+  if (!fs.existsSync(filePath)) {
+    throw new Error(`items file not found: ${filePath}`);
+  }
+  const raw = fs.readFileSync(filePath, "utf8");
+  return JSON.parse(raw);
+}
+
+
+function getSelectedOptionLabelFromPack(pack, itemId, value) {
+  const meta = pack[`item${itemId}`];
+  if (!meta || !meta.options) return "";
+  const opt = meta.options.find(o => String(o.value) === String(value));
+  return opt ? opt.label : "";
+}
+
 async function generateLLMFeedback(data) {
   const fallbackText = buildFallbackText(data);
 
   const name = data.childName || "아이";
   const ageMonth = data.ageMonth ? Number(data.ageMonth) : null;
   const items = Array.isArray(data.items) ? data.items : [];
+  const month = Number(data.month);
+  const lessonKey = String(data.lesson || "").trim(); // "1-1"
 
+  const monthJson = loadMonthItems(month);
+  const pack = monthJson?.[lessonKey];
+  if (!pack) return buildFallbackText(data);
+  
   if (items.length === 0) return fallbackText;
 
   if (!process.env.OPENAI_API_KEY) {
@@ -305,15 +334,16 @@ async function generateLLMFeedback(data) {
     for (const it of items) {
       const idNum = Number(it.id);
       const key = `item${idNum}`;
-      const meta = feedbackItems[key];
+      const meta = pack[`item${idNum}`];
       if (!meta) continue;
+
+      const optionLabel = getSelectedOptionLabelFromPack(pack, idNum, it.value);
 
       itemsForLLM.push({
         id: idNum,
         title: meta.line1 || "",
         line2: meta.line2 || "",
-        line3: getSafeLine3(getSelectedOptionLabel(idNum, it.value)),
-        // ✅ 12-3 표준 규칙: 비교 가능한 항목만 평균 맥락 허용
+        line3: getSafeLine3(optionLabel),
         useAgeNorm: AGE_NORM_ALLOWED_IDS.has(idNum),
       });
     }
