@@ -21,6 +21,19 @@ const app = express();
 // OpenAI SDK는 호출 시점에 client를 생성합니다(키 누락/갱신 이슈 방지)
 
 app.use(express.json());
+// ✅ JSON body 파싱 실패를 JSON으로 반환 (라우트보다 위에 있어야 함)
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
+    console.error("[JSON_PARSE_ERROR]", err.message);
+    return res.status(400).json({
+      success: false,
+      message: "Invalid JSON body",
+      debug_error: err.message,
+    });
+  }
+  next(err);
+});
+
 app.use(express.urlencoded({ extended: true }));
 app.use(
   cors({
@@ -43,32 +56,6 @@ const AGE_NORM_ALLOWED_IDS = new Set([1, 2, 3, 5]);
 // 1) 관찰 텍스트 생성 유틸들
 // ---------------------------
 
-// 선택된 option 라벨 찾기
-function getSelectedOptionLabel(itemId, value) {
-  const meta = pack[`item${itemId}`];
-  if (!meta || !meta.options) return "";
-  const opt = meta.options.find(o => String(o.value) === String(value));
-  return opt ? opt.label : "";
-}
-
-// 각 활동별 line2 + 선택 옵션 문장을 합쳐 "관찰 내용" 만들기
-// function buildActivitiesText(ageMonth, items) {
-//   return items
-//     .map((it, idx) => {
-//       const key = `item${it.id}`;
-//       const meta = feedbackItems[key];
-//       if (!meta) return "";
-
-//       const optionLabel = getSelectedOptionLabel(it.id, it.value);
-//       const baseText = `${meta.line2} ${optionLabel}`.trim();
-
-//       return `${idx + 1}. ${meta.line1}
-// - 관찰 내용: ${baseText}
-// - 선택 수준(level): ${it.value}`;
-//     })
-//     .filter(Boolean)
-//     .join("\n\n");
-// }
 
 // ---------------------------
 // 1) LLM 프롬프트 v1.3 (발달 맥락 문단 전용 + 12-3 규칙 반영)
@@ -431,25 +418,31 @@ app.post("/api/auto-feedback", async (req, res) => {
     console.log("auto-feedback 요청 데이터:", JSON.stringify(data, null, 2));
 
     const llmText = await generateLLMFeedback(data);
-    const ruleBasedText = buildFallbackText(data);
 
+    // (선택) ruleBasedText를 유지하려면: generateLLMFeedback가 pack 기반 fallback을 이미 만듦.
+    // 여기서는 안전하게 llmText만 내려도 됨.
     return res.json({
       success: true,
       autoText: llmText,
-      backupText: ruleBasedText,
+      build_marker: "2025-12-28-joyjoy-v_latest",
     });
   } catch (err) {
-  console.error("자동 피드백 생성 에러:", err);git 
+    console.error("자동 피드백 생성 에러:", err);
 
-  const debug = String(req.query.debug || "") === "1";  // ✅ debug=1일 때만
-  return res.status(500).json({
-    success: false,
-    message: "자동 피드백 생성 중 오류가 발생했습니다.",
-    ...(debug ? { debug_error: String(err?.message || err), debug_stack: String(err?.stack || "") } : {}),
-  });
-}
-
+    const debug = String(req.query.debug || "") === "1";
+    return res.status(500).json({
+      success: false,
+      message: "자동 피드백 생성 중 오류가 발생했습니다.",
+      ...(debug
+        ? {
+          debug_error: String(err?.message || err),
+          debug_stack: String(err?.stack || ""),
+        }
+        : {}),
+    });
+  }
 });
+
 
 // ---------------------------
 // 4) 피드백 저장 API (현재는 콘솔 로그만)
@@ -474,6 +467,19 @@ app.post("/api/feedback", (req, res) => {
     });
   }
 });
+
+
+// ✅ Global error handler (가장 마지막)
+app.use((err, req, res, next) => {
+  console.error("[GLOBAL_ERROR]", err);
+  res.status(500).json({
+    success: false,
+    message: "Internal Server Error (global)",
+    debug_error: String(err?.message || err),
+    debug_stack: String(err?.stack || ""),
+  });
+});
+
 
 // ---------------------------
 // 5) 서버 실행
