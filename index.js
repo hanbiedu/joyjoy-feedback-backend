@@ -14,7 +14,7 @@ try {
   console.log("❌ openai 모듈 로드 불가", e?.message);
 }
 
-const feedbackItems = require("./items/feedback_items.json"); // 🔥 경로 주의!
+// const feedbackItems = require("./items/feedback_items.json"); // 🔥 경로 주의!
 
 const app = express();
 
@@ -45,31 +45,30 @@ const AGE_NORM_ALLOWED_IDS = new Set([1, 2, 3, 5]);
 
 // 선택된 option 라벨 찾기
 function getSelectedOptionLabel(itemId, value) {
-  const key = `item${itemId}`;
-  const meta = feedbackItems[key];
+  const meta = pack[`item${itemId}`];
   if (!meta || !meta.options) return "";
-  const opt = meta.options.find((o) => String(o.value) === String(value));
+  const opt = meta.options.find(o => String(o.value) === String(value));
   return opt ? opt.label : "";
 }
 
 // 각 활동별 line2 + 선택 옵션 문장을 합쳐 "관찰 내용" 만들기
-function buildActivitiesText(ageMonth, items) {
-  return items
-    .map((it, idx) => {
-      const key = `item${it.id}`;
-      const meta = feedbackItems[key];
-      if (!meta) return "";
+// function buildActivitiesText(ageMonth, items) {
+//   return items
+//     .map((it, idx) => {
+//       const key = `item${it.id}`;
+//       const meta = feedbackItems[key];
+//       if (!meta) return "";
 
-      const optionLabel = getSelectedOptionLabel(it.id, it.value);
-      const baseText = `${meta.line2} ${optionLabel}`.trim();
+//       const optionLabel = getSelectedOptionLabel(it.id, it.value);
+//       const baseText = `${meta.line2} ${optionLabel}`.trim();
 
-      return `${idx + 1}. ${meta.line1}
-- 관찰 내용: ${baseText}
-- 선택 수준(level): ${it.value}`;
-    })
-    .filter(Boolean)
-    .join("\n\n");
-}
+//       return `${idx + 1}. ${meta.line1}
+// - 관찰 내용: ${baseText}
+// - 선택 수준(level): ${it.value}`;
+//     })
+//     .filter(Boolean)
+//     .join("\n\n");
+// }
 
 // ---------------------------
 // 1) LLM 프롬프트 v1.3 (발달 맥락 문단 전용 + 12-3 규칙 반영)
@@ -117,9 +116,14 @@ function getSafeLine3(line3) {
 }
 
 // LLM 실패 시 템플릿 기반 백업문
-function buildFallbackText(data) {
-  const name = data.childName || "아이";
-  const ageMonth = data.ageMonth ? Number(data.ageMonth) : null;
+function buildFallbackText(pack, data) {
+  const name = data.childName || data.child_name || "아이";
+  const ageMonthRaw = data.ageMonth ?? data.age_month;
+  const ageMonth =
+    ageMonthRaw !== undefined && ageMonthRaw !== null && ageMonthRaw !== ""
+      ? Number(ageMonthRaw)
+      : null;
+
   const items = Array.isArray(data.items) ? data.items : [];
 
   const header = ageMonth
@@ -128,12 +132,20 @@ function buildFallbackText(data) {
 
   const bullets = items
     .map((it) => {
-      const key = `item${it.id}`;
-      const meta = feedbackItems[key];
-      if (!meta) return "";
+      const id = Number(it.id);
+      if (!Number.isFinite(id)) return "";
 
-      const optionLabel = getSelectedOptionLabel(it.id, it.value);
-      const baseText = `${meta.line2} ${optionLabel}`.trim();
+      const key = `item${id}`;
+      const meta = pack?.[key];
+      if (!meta) return ""; // pack에 없는 item은 스킵 (예: item6 등)
+
+      const optionLabel =
+        meta.options?.find((o) => String(o.value) === String(it.value))?.label || "";
+
+      // label이 "1: ..." 형태면 번호 제거하고 문장만 쓰고 싶을 때:
+      const cleanedLabel = optionLabel.replace(/^\s*\d+\s*:\s*/, "").trim();
+
+      const baseText = `${meta.line2} ${cleanedLabel}`.trim();
       return baseText ? `● ${baseText}` : "";
     })
     .filter(Boolean);
@@ -141,6 +153,7 @@ function buildFallbackText(data) {
   if (bullets.length === 0) return header;
   return `${header}\n\n${bullets.join("\n\n")}`;
 }
+
 
 // ---------------------------
 // 2) OpenAI LLM 호출 (SDK + Responses API)
@@ -302,6 +315,9 @@ function loadMonthItems(month) {
 
 
 function getSelectedOptionLabelFromPack(pack, itemId, value) {
+  const v = String(value ?? "").trim();
+  if (!v) return ""; // ✅ 빈 값 방어
+  
   const meta = pack[`item${itemId}`];
   if (!meta || !meta.options) return "";
   const opt = meta.options.find(o => String(o.value) === String(value));
@@ -309,33 +325,62 @@ function getSelectedOptionLabelFromPack(pack, itemId, value) {
 }
 
 async function generateLLMFeedback(data) {
-  const fallbackText = buildFallbackText(data);
+  const name = data.childName || data.child_name || "아이";
+  const ageMonthRaw = data.ageMonth ?? data.age_month;
+  const ageMonth =
+    ageMonthRaw !== undefined && ageMonthRaw !== null && ageMonthRaw !== ""
+      ? Number(ageMonthRaw)
+      : null;
 
-  const name = data.childName || "아이";
-  const ageMonth = data.ageMonth ? Number(data.ageMonth) : null;
   const items = Array.isArray(data.items) ? data.items : [];
   const month = Number(data.month);
   const lessonKey = String(data.lesson || "").trim(); // "1-1"
 
-  const monthJson = loadMonthItems(month);
-  const pack = monthJson?.[lessonKey];
-  if (!pack) return buildFallbackText(data);
-  
+  // ✅ 1) pack 먼저 확보
+  let pack = null;
+  try {
+    const monthJson = loadMonthItems(month);
+    pack = monthJson?.[lessonKey] || null;
+  } catch (e) {
+    console.error("items json 로드 실패:", e);
+    pack = null;
+  }
+
+  // ✅ 2) pack 기반 fallback 준비 (pack이 없으면 안전 텍스트만)
+  const fallbackText = pack
+    ? buildFallbackText(pack, data)
+    : (() => {
+      // 다른 수업 내용이 섞이지 않도록 '헤더'만 생성
+      const header = ageMonth
+        ? `${ageMonth}개월 ${name}의 오늘 수업 참여 모습을 정리해 보았어요.`
+        : `${name}의 오늘 수업 참여 모습을 정리해 보았어요.`;
+      return header;
+    })();
+
+  // ✅ 3) pack 없으면 여기서 종료 (다른 수업 템플릿 절대 사용 금지)
+  if (!pack) return fallbackText;
+
+  // ✅ items 없으면 fallback만
   if (items.length === 0) return fallbackText;
 
+  // ✅ API 키 없으면 fallback만 (pack 기반이라 안전)
   if (!process.env.OPENAI_API_KEY) {
     console.warn("OPENAI_API_KEY가 설정되어 있지 않습니다. 템플릿 문장만 사용합니다.");
     return fallbackText;
   }
 
   try {
-    // 1) LLM에 보낼 item 목록 구성
+    // 4) LLM에 보낼 item 목록 구성 (pack 기준)
     const itemsForLLM = [];
     for (const it of items) {
+      const v = String(it.value ?? "").trim();
+      if (!v) continue; // ✅ 선택 안 한 항목은 무조건 제외
+
       const idNum = Number(it.id);
-      const key = `item${idNum}`;
+      if (!Number.isFinite(idNum)) continue;
+
       const meta = pack[`item${idNum}`];
-      if (!meta) continue;
+      if (!meta) continue; // pack에 없는 item은 스킵 (예: item6)
 
       const optionLabel = getSelectedOptionLabelFromPack(pack, idNum, it.value);
 
@@ -350,10 +395,10 @@ async function generateLLMFeedback(data) {
 
     if (itemsForLLM.length === 0) return fallbackText;
 
-    // 2) ✅ 여기서 LLM 1회 호출로 id->devParagraph 맵 받기
+    // 5) LLM 1회 호출
     const devMap = await generateDevParagraphsBatch({ name, ageMonth, itemsForLLM });
 
-    // 3) 서버가 최종 섹션 조립
+    // 6) 최종 섹션 조립
     const sections = [];
     for (const x of itemsForLLM) {
       const devParagraph =
@@ -370,9 +415,11 @@ async function generateLLMFeedback(data) {
     return sections.join("\n\n");
   } catch (err) {
     console.error("OpenAI 호출 중 에러:", err);
+    // ✅ 에러 시에도 pack 기반 fallback
     return fallbackText;
   }
 }
+
 
 // ---------------------------
 // 3) 자동 피드백 생성 API
