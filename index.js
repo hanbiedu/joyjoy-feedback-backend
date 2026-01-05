@@ -127,11 +127,17 @@ async function fetchParentPrefFromPhp(parent_id) {
 
   try {
     const r = await fetch(url, { method: "GET" });
-    const j = await r.json().catch(() => null);
-    if (!r.ok || !j) return null;
+    const txt = await r.text(); // 먼저 text로 받고
+    let j = null;
+    try { j = JSON.parse(txt); } catch {}
+
+    console.log("fetchParentPrefFromPhp status:", r.status, "body:", txt.slice(0, 200));
+
+    if (!r.ok || !j || j.ok !== true) return null;
     return j.answers || null;
   } catch (e) {
     console.error("fetchParentPrefFromPhp error:", e?.message || e);
+    console.error("fetchParentPrefFromPhp cause:", e?.cause || null);
     return null;
   }
 }
