@@ -526,6 +526,17 @@ function getSelectedOptionLabelFromPack(pack, itemId, value) {
 }
 
 async function generateLLMFeedback(data) {
+
+
+  // console.log("MODE_CHECK", {
+  //   itemsCount: itemsForLLM.length,
+  //   useSummary: data.useSummary,
+  //   lesson: data.lesson,
+  //   month: data.month
+  // });
+  
+
+
   const name = data.childName || data.child_name || "아이";
   const callName = toKidCallName(name); // ✅ 추가
 
@@ -547,11 +558,11 @@ async function generateLLMFeedback(data) {
   // - auto-feedback에서는 parentPref로도 받을 수 있게 여유 처리
   const parentPref = data.parentPref || data.answers || null;
   const styleRules = buildStyleRules(parentPref || {});
-  console.log("MARK_STYLE_RULES_SUMMARY", {
-    length: styleRules.length,
-    tone: styleRules.tone,
-    ctaStyle: styleRules.ctaStyle
-  });
+  // console.log("MARK_STYLE_RULES_SUMMARY", {
+  //   length: styleRules.length,
+  //   tone: styleRules.tone,
+  //   ctaStyle: styleRules.ctaStyle
+  // });
 
 
 
@@ -623,7 +634,7 @@ async function generateLLMFeedback(data) {
     // 6) 최종 섹션 조립
     const sections = [];
     for (const x of itemsForLLM) {
-      const devParagraph =
+      let devParagraph =
         devMap.get(x.id) ||
         normalize3Lines(
           x.useAgeNorm
