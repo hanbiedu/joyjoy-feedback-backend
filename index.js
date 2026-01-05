@@ -243,6 +243,41 @@ function toKidCallName(fullName = "") {
 }
 
 
+function escapeRegExp(s = "") {
+  return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * fullName(백채유) → callName(채유)로 통일하고,
+ * callName/fullName 뒤에 붙은 '님/씨'를 (공백 포함) 제거한다.
+ */
+function normalizeKidNameInText(text, fullName) {
+  if (!text) return text;
+
+  const callName = toKidCallName(fullName);
+  const full = String(fullName || "").trim();
+  const call = String(callName || "").trim();
+
+  const fullEsc = escapeRegExp(full);
+  const callEsc = escapeRegExp(call);
+
+  // 1) "백채유 님", "백채유님", "백채유  님" → "채유"
+  if (full) {
+    text = text.replace(new RegExp(`${fullEsc}\\s*(님|씨)`, "g"), call);
+  }
+
+  // 2) "백채유" (존칭 없더라도) → "채유"  (성 제거 목적)
+  if (full && call && full !== call) {
+    text = text.replace(new RegExp(fullEsc, "g"), call);
+  }
+
+  // 3) "채유 님", "채유님", "채유 씨" → "채유"
+  if (call) {
+    text = text.replace(new RegExp(`${callEsc}\\s*(님|씨)`, "g"), call);
+  }
+
+  return text;
+}
 
 
 // (옵션) line3가 비어있을 때를 대비한 안전 문장
@@ -465,7 +500,7 @@ function getSelectedOptionLabelFromPack(pack, itemId, value) {
 async function generateLLMFeedback(data) {
   const name = data.childName || data.child_name || "아이";
   const callName = toKidCallName(name); // ✅ 추가
-  
+
 
 
 
@@ -528,11 +563,6 @@ async function generateLLMFeedback(data) {
   }
 
 
-
-
-
-
-
   try {
     // 4) LLM에 보낼 item 목록 구성 (pack 기준)
     const itemsForLLM = [];
@@ -576,7 +606,9 @@ async function generateLLMFeedback(data) {
       sections.push(buildFinalSection({ title: x.title, line2: x.line2, devParagraph }));
     }
 
-    return sections.join("\n\n");
+    const out = sections.join("\n\n");
+    return normalizeKidNameInText(out, name); // name은 원본 fullName(예: 백채유)
+
   } catch (err) {
     console.error("OpenAI 호출 중 에러:", err);
     // ✅ 에러 시에도 pack 기반 fallback
