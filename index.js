@@ -45,131 +45,6 @@ app.get("/", (req, res) => {
   res.send("JOYJOY Feedback Backend is running.");
 });
 
-
-
-
-// ---------------------------
-// 부모성향(설문) → LLM 스타일 룰 변환
-// parentPref 형태: { q1:"1~4", q2:"1~4", q3:"1~4" }
-// ---------------------------
-function buildStyleRules(parentPref) {
-  const q1 = String(parentPref?.q1 ?? "").trim();
-  const q2 = String(parentPref?.q2 ?? "").trim();
-  const q3 = String(parentPref?.q3 ?? "").trim();
-
-  // ✅ 기본값(설문이 없거나 깨졌을 때도 안전하게)
-  const rules = {
-    // devParagraph는 3문장/3줄 고정이므로,
-    // "길이"는 문장 길이/정보량을 조절하는 용도
-    length: "medium",               // short | medium | long
-    tone: "neutralWarm",            // neutralWarm | warm | professional
-    sentenceStyle: "normal",        // shortSentences | normal
-    focus: [],                      // ["participation","varietyExperience","developmentMeaning","ageFit","emotionalSafety"]
-    ctaStyle: "optional",           // optional | options | stepByStep
-    ctaCount: 1,                    // 0~2 (문장 수 제한상 2 넘기지 말기)
-    reassuranceLevel: "low",        // low | medium | high
-    mustAvoid: [
-      "medicalDiagnosis",
-      "peerComparison",
-      "anxietyTrigger",
-      "homeworkTone",
-    ],
-  };
-
-  // ---------------------------
-  // Q1: 피드백에서 궁금한 것
-  // 1 월령 적합 / 2 반응·참여 / 3 발달 도움 / 4 편안·즐거움
-  // (설문 문구는 pasted.txt 참고) :contentReference[oaicite:2]{index=2}
-  // ---------------------------
-  if (q1 === "1") rules.focus.push("ageFit");
-  if (q1 === "2") rules.focus.push("participation");
-  if (q1 === "3") rules.focus.push("developmentMeaning");
-  if (q1 === "4") rules.focus.push("emotionalSafety");
-
-  // ---------------------------
-  // Q2: 선택 이유
-  // 1 발달경험 / 2 다양한 놀이 / 3 안정 / 4 맞춤
-  // ---------------------------
-  if (q2 === "1") rules.focus.push("developmentMeaning");
-  if (q2 === "2") rules.focus.push("varietyExperience");
-  if (q2 === "3") rules.focus.push("emotionalSafety");
-  if (q2 === "4") rules.focus.push("personalization");
-
-
-
-  // ---------------------------
-  // 불안 완화 강도(안정/월령중심이면 조금 올림)
-  // ---------------------------
-  // 길이(정보 밀도) – q1/q2만 반영
-  if (q1 === "3" || q2 === "1" || q2 === "4") {
-    rules.length = "long";   // 발달 의미/맞춤 관심
-  } else {
-    rules.length = "medium"; // 기본
-  }
-
-
-  // ---------------------------
-  // 중복 제거 + focus 비었으면 기본값
-  // ---------------------------
-  rules.focus = Array.from(new Set(rules.focus));
-  if (rules.focus.length === 0) rules.focus = ["participation"];
-
-  return rules;
-}
-
-
-async function fetchParentPrefFromPhp(parent_id) {
-  if (!parent_id) return null;
-
-
-
-  const url = `https://jo2jo2.co.kr/feedback/parents/getParentPref.php?parent_id=${encodeURIComponent(parent_id)}`;
-
-  try {
-    const r = await fetch(url, { method: "GET" });
-    const txt = await r.text(); // 먼저 text로 받고
-    let j = null;
-    try { j = JSON.parse(txt); } catch { }
-
-    console.log("fetchParentPrefFromPhp status:", r.status, "body:", txt.slice(0, 200));
-
-    if (!r.ok || !j || j.ok !== true) return null;
-    return j.answers || null;
-  } catch (e) {
-    console.error("fetchParentPrefFromPhp error:", e?.message || e);
-    console.error("fetchParentPrefFromPhp cause:", e?.cause || null);
-    return null;
-  }
-}
-
-
-
-function normalizeMeaningSentence(sentence = "") {
-  try {
-    const s = String(sentence ?? "").trim();
-    if (!s) return s;
-
-    // 이미 지시어 시작이면 그대로
-    if (/^(이 활동은|이 경험은|이 과정은)/.test(s)) return s;
-
-    // "…은/는 …" 구조면 앞부분 제거하고 지시어로 시작
-    // 예: "동물 꼭지 교구를 만져보며 같은 그림을 찾는 활동은 아이의 소근육 발달에 도움이 됩니다."
-    const m = s.match(/^(.*?)(은|는)\s+(.*)$/);
-    if (m && m[3]) {
-      return `이 활동은 ${m[3].trim()}`;
-    }
-
-    // 구조가 애매하면 그냥 앞에만 붙임(내용 손상 방지)
-    return `이 활동은 ${s}`;
-  } catch (e) {
-    console.error("normalizeMeaningSentence ERROR:", e?.stack || e);
-    return String(sentence ?? "");
-  }
-}
-
-
-
-
 // ---------------------------
 // ✅ 12-3 클레이 "평균(월령) 맥락" 적용 규칙(서버 고정)
 // - 비교 가능한 항목에만 적용: ① ② ③ ⑤
@@ -203,22 +78,6 @@ const DEV_PARA_BATCH_INSTRUCTIONS_V13 = `
   - useAgeNorm=true: "월령 평균(이 시기/34개월 전후)" 맥락을 허용
   - useAgeNorm=false: "월령 평균/또래 일반화" 표현을 금지(월령/이 시기/34개월 전후/또래 등 언급 금지)
 
-
-
-  [스타일 룰(styleRules) - 적용 규칙]
-- 입력 JSON에 styleRules가 있으면, devParagraph의 '표현 방식'만 styleRules에 맞게 조절하라.
-- 사실(= title/line2/line3에 있는 내용)과 관찰의 의미를 바꾸지 마라. 새로운 사실을 추가하지 마라.
-- 길이/문장 스타일:
-  - styleRules.length=short: 각 문장을 짧고 단순하게 쓴다(불필요한 설명 최소화).
-  - styleRules.sentenceStyle=shortSentences: 문장 길이를 짧게 유지한다.
-- 톤:
-  - tone=professional: 더 담백하고 정보 중심(과한 감탄/이모지 금지)
-  - tone=warm: 더 따뜻하고 공감 문장 1개까지 허용(과장 금지)
-  - tone=neutralWarm: 기본(담백+부드럽게)
-
-- mustAvoid에 해당하는 표현은 추가로 금지한다(진단/또래비교/불안유발/숙제톤 등).
-
-
 [핵심 작성 규칙 - 12-3 표준]
 - useAgeNorm=true인 항목에서만 월령 맥락(예: '이 시기의 아이들', '34개월 전후')을 사용할 수 있다.
 - 월령 맥락 문구는 문장 '도입부 고정'으로 반복하지 말고, 문장 중간/후반에 자연스럽게 섞어라.
@@ -237,80 +96,6 @@ const DEV_PARA_BATCH_INSTRUCTIONS_V13 = `
 - 예: “~시기예요.” “~단계로 보여요.” “~경험이 중요해요.”
 `.trim();
 
-
-
-function toKidCallName(fullName = "") {
-  const name = String(fullName).trim().split(/\s+/).pop() || "";
-  const isHangul = /^[가-힣]+$/.test(name);
-
-  if (!isHangul) return name; // 영문/기타는 그대로
-
-  const doubleSurnames = new Set([
-    "남궁", "제갈", "선우", "서문", "황보", "독고", "사공", "공손", "동방", "어금", "망절", "장곡"
-  ]);
-
-  // 복성 + 이름(2) = 4글자
-  if (name.length === 4 && doubleSurnames.has(name.slice(0, 2))) {
-    const given = name.slice(2); // 2글자
-    return given; // "민수"
-  }
-
-  // 일반 성(1) + 이름(2) = 3글자
-  if (name.length === 3) {
-    return name.slice(1); // "한비"
-  }
-
-  // 성(1) + 이름(1) = 2글자
-  if (name.length === 2) {
-    return name.slice(1) + "이"; // "윤이"
-  }
-
-  // 그 외(예: 4글자 이상인데 복성 아님 / 예외 이름): 마지막 2글자 권장
-  if (name.length >= 2) return name.slice(-2);
-
-  return name;
-}
-
-
-function escapeRegExp(s = "") {
-  return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-/**
- * fullName(백채유) → callName(채유)로 통일하고,
- * callName/fullName 뒤에 붙은 '님/씨'를 (공백 포함) 제거한다.
- */
-function normalizeKidNameInText(text, fullName) {
-  try {
-    if (!text) return text;
-
-    const full = String(fullName || "").trim();
-    const call = toKidCallName(full);
-
-    // full이 비어있으면 "님/씨"만 정리하지 말고 그대로 반환 (안전)
-    if (!full) return text;
-
-    const fullEsc = escapeRegExp(full);
-    const callEsc = escapeRegExp(call);
-
-    // 1) "백채유 님" / "백채유님" / "백채유  님은" → "채유는"
-    text = text.replace(new RegExp(`${fullEsc}\\s*(님|씨)`, "g"), call);
-
-    // 2) callName 쪽도 동일 정리: "채유 님" → "채유"
-    text = text.replace(new RegExp(`${callEsc}\\s*(님|씨)`, "g"), call);
-
-    // 3) 조사 붙는 케이스까지 정리: "채유 님은" → "채유는"
-    // (위 1,2로 대부분 해결되지만 안전하게)
-    text = text.replace(new RegExp(`${callEsc}\\s*(은|는|이|가|을|를|와|과)`, "g"), `${call}$1`);
-
-    return text;
-  } catch (e) {
-    console.error("normalizeKidNameInText ERROR:", e?.stack || e);
-    return text; // 실패해도 원문 반환 (절대 생성이 멈추지 않게)
-  }
-}
-
-
 // (옵션) line3가 비어있을 때를 대비한 안전 문장
 function getSafeLine3(line3) {
   const t = (line3 || "").trim();
@@ -320,7 +105,6 @@ function getSafeLine3(line3) {
 // LLM 실패 시 템플릿 기반 백업문
 function buildFallbackText(pack, data) {
   const name = data.childName || data.child_name || "아이";
-  const callName = toKidCallName(name);
   const ageMonthRaw = data.ageMonth ?? data.age_month;
   const ageMonth =
     ageMonthRaw !== undefined && ageMonthRaw !== null && ageMonthRaw !== ""
@@ -330,8 +114,8 @@ function buildFallbackText(pack, data) {
   const items = Array.isArray(data.items) ? data.items : [];
 
   const header = ageMonth
-    ? `${ageMonth}개월 ${callName}의 오늘 수업 참여 모습을 정리해 보았어요.`
-    : `${callName}의 오늘 수업 참여 모습을 정리해 보았어요.`;
+    ? `${ageMonth}개월 ${name}의 오늘 수업 참여 모습을 정리해 보았어요.`
+    : `${name}의 오늘 수업 참여 모습을 정리해 보았어요.`;
 
   const bullets = items
     .map((it) => {
@@ -362,7 +146,7 @@ function buildFallbackText(pack, data) {
 // 2) OpenAI LLM 호출 (SDK + Responses API)
 //    - item별로 "발달 맥락 문단(3문장)"만 생성
 // ---------------------------
-async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM, styleRules }) {
+async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM }) {
   console.log("🔥 generateDevParagraphsBatch HIT", process.env.RENDER_GIT_COMMIT);
 
   // ✅ OpenAI client 생성(스코프 문제 해결)
@@ -371,7 +155,6 @@ async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM, styleRu
   const payload = {
     childName: name,
     ageMonth,
-    styleRules: styleRules || null,
     items: itemsForLLM.map((x) => ({
       id: x.id,
       title: x.title,
@@ -529,23 +312,7 @@ function getSelectedOptionLabelFromPack(pack, itemId, value) {
 }
 
 async function generateLLMFeedback(data) {
-
-
-  // console.log("MODE_CHECK", {
-  //   itemsCount: itemsForLLM.length,
-  //   useSummary: data.useSummary,
-  //   lesson: data.lesson,
-  //   month: data.month
-  // });
-
-
-
   const name = data.childName || data.child_name || "아이";
-  const callName = toKidCallName(name); // ✅ 추가
-
-
-
-
   const ageMonthRaw = data.ageMonth ?? data.age_month;
   const ageMonth =
     ageMonthRaw !== undefined && ageMonthRaw !== null && ageMonthRaw !== ""
@@ -555,21 +322,6 @@ async function generateLLMFeedback(data) {
   const items = Array.isArray(data.items) ? data.items : [];
   const month = Number(data.month);
   const lessonKey = String(data.lesson || "").trim(); // "1-1"
-
-  // ✅ 부모성향(설문) 수신: { q1:"1~4", q2:"1~4", q3:"1~4" }
-  // - setParentPref.php는 answers로 보냄
-  // - auto-feedback에서는 parentPref로도 받을 수 있게 여유 처리
-  const parentPref = data.parentPref || data.answers || null;
-  const styleRules = buildStyleRules(parentPref || {});
-  // console.log("MARK_STYLE_RULES_SUMMARY", {
-  //   length: styleRules.length,
-  //   tone: styleRules.tone,
-  //   ctaStyle: styleRules.ctaStyle
-  // });
-
-
-
-
 
   // ✅ 1) pack 먼저 확보
   let pack = null;
@@ -587,8 +339,8 @@ async function generateLLMFeedback(data) {
     : (() => {
       // 다른 수업 내용이 섞이지 않도록 '헤더'만 생성
       const header = ageMonth
-        ? `${ageMonth}개월 ${callName}의 오늘 수업 참여 모습을 정리해 보았어요.`
-        : `${callName}의 오늘 수업 참여 모습을 정리해 보았어요.`;
+        ? `${ageMonth}개월 ${name}의 오늘 수업 참여 모습을 정리해 보았어요.`
+        : `${name}의 오늘 수업 참여 모습을 정리해 보았어요.`;
       return header;
     })();
 
@@ -603,7 +355,6 @@ async function generateLLMFeedback(data) {
     console.warn("OPENAI_API_KEY가 설정되어 있지 않습니다. 템플릿 문장만 사용합니다.");
     return fallbackText;
   }
-
 
   try {
     // 4) LLM에 보낼 item 목록 구성 (pack 기준)
@@ -632,12 +383,12 @@ async function generateLLMFeedback(data) {
     if (itemsForLLM.length === 0) return fallbackText;
 
     // 5) LLM 1회 호출
-    const devMap = await generateDevParagraphsBatch({ name: callName, ageMonth, itemsForLLM, styleRules });
+    const devMap = await generateDevParagraphsBatch({ name, ageMonth, itemsForLLM });
 
     // 6) 최종 섹션 조립
     const sections = [];
     for (const x of itemsForLLM) {
-      let devParagraph =
+      const devParagraph =
         devMap.get(x.id) ||
         normalize3Lines(
           x.useAgeNorm
@@ -645,25 +396,10 @@ async function generateLLMFeedback(data) {
             : "활동 과정에서 자신의 방식으로 참여하며 경험을 쌓아 가는 모습이 관찰되었어요.\n놀이를 이어가며 시도하고 완성해 보는 경험이 의미 있게 이어질 수 있어요.\n차분히 반복하며 익혀 가는 과정이 도움이 될 수 있어요."
         );
 
-      if (devParagraph) {
-        const lines = devParagraph.split("\n");
-        // 보통 2번째 줄이 '의미 문장'
-        if (lines[1]) lines[1] = normalizeMeaningSentence(lines[1]);
-        devParagraph = lines.join("\n");
-      }
-
-      sections.push(
-        buildFinalSection({
-          title: x.title,
-          line2: x.line2,
-          devParagraph
-        })
-      );
+      sections.push(buildFinalSection({ title: x.title, line2: x.line2, devParagraph }));
     }
 
-    const out = sections.join("\n\n");
-    return normalizeKidNameInText(out, name); // name은 원본 fullName(예: 백채유)
-
+    return sections.join("\n\n");
   } catch (err) {
     console.error("OpenAI 호출 중 에러:", err);
     // ✅ 에러 시에도 pack 기반 fallback
@@ -680,18 +416,6 @@ app.post("/api/auto-feedback", async (req, res) => {
     console.log("💥 /api/auto-feedback 호출됨!");
     const data = req.body || {};
     console.log("auto-feedback 요청 데이터:", JSON.stringify(data, null, 2));
-
-
-    // ✅ 1) parent_id 추출 (설문 저장 payload는 parent_id 사용) :contentReference[oaicite:3]{index=3}
-    const parent_id = String(data.parent_id || data.parentId || data.hp || "").trim();
-
-    // ✅ 2) body에 answers/parentPref 없으면 PHP에서 조회해서 주입
-    if (!data.answers && !data.parentPref) {
-      const answers = await fetchParentPrefFromPhp(parent_id);
-      if (answers) data.answers = answers;     // ← generateLLMFeedback가 인식함 :contentReference[oaicite:4]{index=4}
-      else data.answers = null;                 // 설문 없으면 null 유지
-    }
-
 
     const llmText = await generateLLMFeedback(data);
 
