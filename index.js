@@ -123,7 +123,7 @@ async function fetchParentPrefFromPhp(parent_id) {
 
 
 
-  const url = `https://joyjoy.co.kr/feedback/parents/getParentPref.php?parent_id=${encodeURIComponent(parent_id)}`;
+  const url = `https://jo2jo2.co.kr/feedback/parents/getParentPref.php?parent_id=${encodeURIComponent(parent_id)}`;
 
   try {
     const r = await fetch(url, { method: "GET" });
