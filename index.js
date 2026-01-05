@@ -144,6 +144,26 @@ async function fetchParentPrefFromPhp(parent_id) {
 
 
 
+function normalizeMeaningSentence(sentence = "") {
+  if (!sentence) return sentence;
+
+  const trimmed = sentence.trim();
+
+  // 이미 "이 활동은"으로 시작하면 그대로
+  if (trimmed.startsWith("이 활동은")) return trimmed;
+
+  // 활동 설명 반복 패턴 감지:
+  // "~하며", "~로", "~을/를", "~을 통해" 등으로 시작하는 경우
+  const repeatPattern = /^(.*?)(하며|로 |을 |를 |을 통해|를 통해)/;
+
+  if (repeatPattern.test(trimmed)) {
+    // 문장 중 의미 부분만 남기고 문두 교체
+    const replaced = trimmed.replace(/^.*?(은 |는 )/, "");
+    return `이 활동은 ${replaced}`;
+  }
+
+  return trimmed;
+}
 
 
 
@@ -611,7 +631,20 @@ async function generateLLMFeedback(data) {
             : "활동 과정에서 자신의 방식으로 참여하며 경험을 쌓아 가는 모습이 관찰되었어요.\n놀이를 이어가며 시도하고 완성해 보는 경험이 의미 있게 이어질 수 있어요.\n차분히 반복하며 익혀 가는 과정이 도움이 될 수 있어요."
         );
 
-      sections.push(buildFinalSection({ title: x.title, line2: x.line2, devParagraph }));
+        if (devParagraph) {
+          const lines = devParagraph.split("\n");
+          // 보통 2번째 줄이 '의미 문장'
+          if (lines[1]) lines[1] = normalizeMeaningSentence(lines[1]);
+          devParagraph = lines.join("\n");
+        }
+      
+        sections.push(
+          buildFinalSection({
+            title: x.title,
+            line2: x.line2,
+            devParagraph
+          })
+        );
     }
 
     const out = sections.join("\n\n");
