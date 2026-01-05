@@ -74,6 +74,7 @@ const DEV_PARA_BATCH_INSTRUCTIONS_V13 = `
 
 [입력]
 - 아동 이름, 월령
+
 - items: 각 item은 id, title, line2(활동 설명), line3(교사 관찰), useAgeNorm(boolean)로 구성
   - useAgeNorm=true: "월령 평균(이 시기/34개월 전후)" 맥락을 허용
   - useAgeNorm=false: "월령 평균/또래 일반화" 표현을 금지(월령/이 시기/34개월 전후/또래 등 언급 금지)
@@ -605,6 +606,17 @@ app.post("/api/auto-feedback", async (req, res) => {
     const data = req.body || {};
     console.log("auto-feedback 요청 데이터:", JSON.stringify(data, null, 2));
 
+    // ✅ 1) parent_id 추출 (설문 저장 payload는 parent_id 사용) :contentReference[oaicite:3]{index=3}
+    const parent_id = String(data.parent_id || data.parentId || data.hp || "").trim();
+
+    // ✅ 2) body에 answers/parentPref 없으면 PHP에서 조회해서 주입
+    if (!data.answers && !data.parentPref) {
+      const answers = await fetchParentPrefFromPhp(parent_id);
+      if (answers) data.answers = answers;     // ← generateLLMFeedback가 인식함 :contentReference[oaicite:4]{index=4}
+      else data.answers = null;                 // 설문 없으면 null 유지
+    }
+
+    
     const llmText = await generateLLMFeedback(data);
 
     // (선택) ruleBasedText를 유지하려면: generateLLMFeedback가 pack 기반 fallback을 이미 만듦.
