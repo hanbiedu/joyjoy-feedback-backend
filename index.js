@@ -129,7 +129,7 @@ async function fetchParentPrefFromPhp(parent_id) {
     const r = await fetch(url, { method: "GET" });
     const txt = await r.text(); // 먼저 text로 받고
     let j = null;
-    try { j = JSON.parse(txt); } catch {}
+    try { j = JSON.parse(txt); } catch { }
 
     console.log("fetchParentPrefFromPhp status:", r.status, "body:", txt.slice(0, 200));
 
@@ -145,25 +145,28 @@ async function fetchParentPrefFromPhp(parent_id) {
 
 
 function normalizeMeaningSentence(sentence = "") {
-  if (!sentence) return sentence;
+  try {
+    const s = String(sentence ?? "").trim();
+    if (!s) return s;
 
-  const trimmed = sentence.trim();
+    // 이미 지시어 시작이면 그대로
+    if (/^(이 활동은|이 경험은|이 과정은)/.test(s)) return s;
 
-  // 이미 "이 활동은"으로 시작하면 그대로
-  if (trimmed.startsWith("이 활동은")) return trimmed;
+    // "…은/는 …" 구조면 앞부분 제거하고 지시어로 시작
+    // 예: "동물 꼭지 교구를 만져보며 같은 그림을 찾는 활동은 아이의 소근육 발달에 도움이 됩니다."
+    const m = s.match(/^(.*?)(은|는)\s+(.*)$/);
+    if (m && m[3]) {
+      return `이 활동은 ${m[3].trim()}`;
+    }
 
-  // 활동 설명 반복 패턴 감지:
-  // "~하며", "~로", "~을/를", "~을 통해" 등으로 시작하는 경우
-  const repeatPattern = /^(.*?)(하며|로 |을 |를 |을 통해|를 통해)/;
-
-  if (repeatPattern.test(trimmed)) {
-    // 문장 중 의미 부분만 남기고 문두 교체
-    const replaced = trimmed.replace(/^.*?(은 |는 )/, "");
-    return `이 활동은 ${replaced}`;
+    // 구조가 애매하면 그냥 앞에만 붙임(내용 손상 방지)
+    return `이 활동은 ${s}`;
+  } catch (e) {
+    console.error("normalizeMeaningSentence ERROR:", e?.stack || e);
+    return String(sentence ?? "");
   }
-
-  return trimmed;
 }
+
 
 
 
@@ -534,7 +537,7 @@ async function generateLLMFeedback(data) {
   //   lesson: data.lesson,
   //   month: data.month
   // });
-  
+
 
 
   const name = data.childName || data.child_name || "아이";
@@ -642,20 +645,20 @@ async function generateLLMFeedback(data) {
             : "활동 과정에서 자신의 방식으로 참여하며 경험을 쌓아 가는 모습이 관찰되었어요.\n놀이를 이어가며 시도하고 완성해 보는 경험이 의미 있게 이어질 수 있어요.\n차분히 반복하며 익혀 가는 과정이 도움이 될 수 있어요."
         );
 
-        if (devParagraph) {
-          const lines = devParagraph.split("\n");
-          // 보통 2번째 줄이 '의미 문장'
-          if (lines[1]) lines[1] = normalizeMeaningSentence(lines[1]);
-          devParagraph = lines.join("\n");
-        }
-      
-        sections.push(
-          buildFinalSection({
-            title: x.title,
-            line2: x.line2,
-            devParagraph
-          })
-        );
+      if (devParagraph) {
+        const lines = devParagraph.split("\n");
+        // 보통 2번째 줄이 '의미 문장'
+        if (lines[1]) lines[1] = normalizeMeaningSentence(lines[1]);
+        devParagraph = lines.join("\n");
+      }
+
+      sections.push(
+        buildFinalSection({
+          title: x.title,
+          line2: x.line2,
+          devParagraph
+        })
+      );
     }
 
     const out = sections.join("\n\n");
