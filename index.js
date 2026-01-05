@@ -448,7 +448,8 @@ async function generateLLMFeedback(data) {
   // - auto-feedback에서는 parentPref로도 받을 수 있게 여유 처리
   const parentPref = data.parentPref || data.answers || null;
   const styleRules = parentPref ? buildStyleRules(parentPref) : null;
-
+  if (styleRules) console.log("✅ parent styleRules:", styleRules);
+  else console.log("styleRules is null>>>>>>>>>>>>>>>");
 
 
 
@@ -487,7 +488,7 @@ async function generateLLMFeedback(data) {
   }
 
 
-  if (styleRules) console.log("✅ parent styleRules:", styleRules);
+  
 
 
 
