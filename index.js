@@ -112,8 +112,7 @@ const DEV_PARA_BATCH_INSTRUCTIONS_V13 = `
 `.trim();
 
 
-const parentPref = data.parentPref || data.answers || null;
-const styleRules = buildStyleRules(parentPref || {});
+
 
 // ---------------------------
 // 부모성향(설문) → LLM 스타일 룰 변환
@@ -510,6 +509,9 @@ async function generateLLMFeedback(data) {
   const month = Number(data.month);
   const lessonKey = String(data.lesson || "").trim(); // "1-1"
 
+  const parentPref = data.parentPref || data.answers || null;
+  const styleRules = buildStyleRules(parentPref || {});
+
   // ✅ 1) pack 먼저 확보
   let pack = null;
   try {
@@ -588,7 +590,7 @@ async function generateLLMFeedback(data) {
 
     const out = sections.join("\n\n");
     return normalizeKidNameInText(out, name); // name은 원본 fullName(예: 백채유)
-    
+
   } catch (err) {
     console.error("OpenAI 호출 중 에러:", err);
     // ✅ 에러 시에도 pack 기반 fallback
@@ -616,7 +618,7 @@ app.post("/api/auto-feedback", async (req, res) => {
       else data.answers = null;                 // 설문 없으면 null 유지
     }
 
-    
+
     const llmText = await generateLLMFeedback(data);
 
     // (선택) ruleBasedText를 유지하려면: generateLLMFeedback가 pack 기반 fallback을 이미 만듦.
