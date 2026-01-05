@@ -208,6 +208,43 @@ const DEV_PARA_BATCH_INSTRUCTIONS_V13 = `
 - 예: “~시기예요.” “~단계로 보여요.” “~경험이 중요해요.”
 `.trim();
 
+
+
+function toKidCallName(fullName = "") {
+  const name = String(fullName).trim().split(/\s+/).pop() || "";
+  const isHangul = /^[가-힣]+$/.test(name);
+
+  if (!isHangul) return name; // 영문/기타는 그대로
+
+  const doubleSurnames = new Set([
+    "남궁", "제갈", "선우", "서문", "황보", "독고", "사공", "공손", "동방", "어금", "망절", "장곡"
+  ]);
+
+  // 복성 + 이름(2) = 4글자
+  if (name.length === 4 && doubleSurnames.has(name.slice(0, 2))) {
+    const given = name.slice(2); // 2글자
+    return given; // "민수"
+  }
+
+  // 일반 성(1) + 이름(2) = 3글자
+  if (name.length === 3) {
+    return name.slice(1); // "한비"
+  }
+
+  // 성(1) + 이름(1) = 2글자
+  if (name.length === 2) {
+    return name.slice(1) + "이"; // "윤이"
+  }
+
+  // 그 외(예: 4글자 이상인데 복성 아님 / 예외 이름): 마지막 2글자 권장
+  if (name.length >= 2) return name.slice(-2);
+
+  return name;
+}
+
+
+
+
 // (옵션) line3가 비어있을 때를 대비한 안전 문장
 function getSafeLine3(line3) {
   const t = (line3 || "").trim();
@@ -217,6 +254,7 @@ function getSafeLine3(line3) {
 // LLM 실패 시 템플릿 기반 백업문
 function buildFallbackText(pack, data) {
   const name = data.childName || data.child_name || "아이";
+  const callName = toKidCallName(name);
   const ageMonthRaw = data.ageMonth ?? data.age_month;
   const ageMonth =
     ageMonthRaw !== undefined && ageMonthRaw !== null && ageMonthRaw !== ""
@@ -226,8 +264,8 @@ function buildFallbackText(pack, data) {
   const items = Array.isArray(data.items) ? data.items : [];
 
   const header = ageMonth
-    ? `${ageMonth}개월 ${name}의 오늘 수업 참여 모습을 정리해 보았어요.`
-    : `${name}의 오늘 수업 참여 모습을 정리해 보았어요.`;
+    ? `${ageMonth}개월 ${callName}의 오늘 수업 참여 모습을 정리해 보았어요.`
+    : `${callName}의 오늘 수업 참여 모습을 정리해 보았어요.`;
 
   const bullets = items
     .map((it) => {
@@ -426,6 +464,11 @@ function getSelectedOptionLabelFromPack(pack, itemId, value) {
 
 async function generateLLMFeedback(data) {
   const name = data.childName || data.child_name || "아이";
+  const callName = toKidCallName(name); // ✅ 추가
+  
+
+
+
   const ageMonthRaw = data.ageMonth ?? data.age_month;
   const ageMonth =
     ageMonthRaw !== undefined && ageMonthRaw !== null && ageMonthRaw !== ""
@@ -467,8 +510,8 @@ async function generateLLMFeedback(data) {
     : (() => {
       // 다른 수업 내용이 섞이지 않도록 '헤더'만 생성
       const header = ageMonth
-        ? `${ageMonth}개월 ${name}의 오늘 수업 참여 모습을 정리해 보았어요.`
-        : `${name}의 오늘 수업 참여 모습을 정리해 보았어요.`;
+        ? `${ageMonth}개월 ${callName}의 오늘 수업 참여 모습을 정리해 보았어요.`
+        : `${callName}의 오늘 수업 참여 모습을 정리해 보았어요.`;
       return header;
     })();
 
@@ -517,7 +560,7 @@ async function generateLLMFeedback(data) {
     if (itemsForLLM.length === 0) return fallbackText;
 
     // 5) LLM 1회 호출
-    const devMap = await generateDevParagraphsBatch({ name, ageMonth, itemsForLLM, styleRules });
+    const devMap = await generateDevParagraphsBatch({ name: callName, ageMonth, itemsForLLM, styleRules });
 
     // 6) 최종 섹션 조립
     const sections = [];
