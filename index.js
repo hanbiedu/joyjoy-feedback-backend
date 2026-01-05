@@ -451,6 +451,8 @@ async function generateLLMFeedback(data) {
   if (styleRules) console.log("✅ parent styleRules:", styleRules);
   else console.log("styleRules is null>>>>>>>>>>>>>>>");
 
+  console.log("✅ parent styleRules:", styleRules);
+
 
 
 
