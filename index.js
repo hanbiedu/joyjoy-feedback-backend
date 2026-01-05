@@ -45,6 +45,106 @@ app.get("/", (req, res) => {
   res.send("JOYJOY Feedback Backend is running.");
 });
 
+
+
+
+// ---------------------------
+// 부모성향(설문) → LLM 스타일 룰 변환
+// parentPref 형태: { q1:"1~4", q2:"1~4", q3:"1~4" }
+// ---------------------------
+function buildStyleRules(parentPref) {
+  const q1 = String(parentPref?.q1 ?? "").trim();
+  const q2 = String(parentPref?.q2 ?? "").trim();
+  const q3 = String(parentPref?.q3 ?? "").trim();
+
+  // ✅ 기본값(설문이 없거나 깨졌을 때도 안전하게)
+  const rules = {
+    // devParagraph는 3문장/3줄 고정이므로,
+    // "길이"는 문장 길이/정보량을 조절하는 용도
+    length: "medium",               // short | medium | long
+    tone: "neutralWarm",            // neutralWarm | warm | professional
+    sentenceStyle: "normal",        // shortSentences | normal
+    focus: [],                      // ["participation","varietyExperience","developmentMeaning","ageFit","emotionalSafety"]
+    ctaStyle: "optional",           // optional | options | stepByStep
+    ctaCount: 1,                    // 0~2 (문장 수 제한상 2 넘기지 말기)
+    reassuranceLevel: "low",        // low | medium | high
+    mustAvoid: [
+      "medicalDiagnosis",
+      "peerComparison",
+      "anxietyTrigger",
+      "homeworkTone",
+    ],
+  };
+
+  // ---------------------------
+  // Q1: 피드백에서 궁금한 것
+  // 1 월령 적합 / 2 반응·참여 / 3 발달 도움 / 4 편안·즐거움
+  // (설문 문구는 pasted.txt 참고) :contentReference[oaicite:2]{index=2}
+  // ---------------------------
+  if (q1 === "1") rules.focus.push("ageFit");
+  if (q1 === "2") rules.focus.push("participation");
+  if (q1 === "3") rules.focus.push("developmentMeaning");
+  if (q1 === "4") rules.focus.push("emotionalSafety");
+
+  // ---------------------------
+  // Q2: 선택 이유
+  // 1 발달경험 / 2 다양한 놀이 / 3 안정 / 4 맞춤
+  // ---------------------------
+  if (q2 === "1") rules.focus.push("developmentMeaning");
+  if (q2 === "2") rules.focus.push("varietyExperience");
+  if (q2 === "3") rules.focus.push("emotionalSafety");
+  if (q2 === "4") rules.focus.push("personalization");
+
+  // ---------------------------
+  // Q3: 보호자 참여 방식
+  // 1 같이 참여 / 2 지켜봄 / 3 중간 도움 / 4 맡기고 다른 일
+  // ---------------------------
+  if (q3 === "1") {
+    rules.length = "medium";
+    rules.tone = "warm";
+    rules.ctaStyle = "options";
+    rules.ctaCount = 2; // 함께할 수 있는 선택지 2개까지
+  } else if (q3 === "2") {
+    rules.length = "medium";
+    rules.tone = "neutralWarm";
+    rules.ctaStyle = "optional";
+    rules.ctaCount = 1;
+  } else if (q3 === "3") {
+    rules.length = "medium";
+    rules.tone = "neutralWarm";
+    rules.ctaStyle = "stepByStep"; // “도움 주는 타이밍/방법”을 1~2단계로
+    rules.ctaCount = 1;
+  } else if (q3 === "4") {
+    // ✅ 맡기고 다른 일: 간결/옵션형(숙제톤 금지)
+    rules.length = "short";
+    rules.tone = "neutralWarm";
+    rules.sentenceStyle = "shortSentences";
+    rules.ctaStyle = "optional";
+    rules.ctaCount = 1;
+  }
+
+  // ---------------------------
+  // 불안 완화 강도(안정/월령중심이면 조금 올림)
+  // ---------------------------
+  if (q1 === "4" || q2 === "3") rules.reassuranceLevel = "high";
+  else if (q1 === "1") rules.reassuranceLevel = "medium";
+
+  // ---------------------------
+  // 중복 제거 + focus 비었으면 기본값
+  // ---------------------------
+  rules.focus = Array.from(new Set(rules.focus));
+  if (rules.focus.length === 0) rules.focus = ["participation"];
+
+  return rules;
+}
+
+
+
+
+
+
+
+
 // ---------------------------
 // ✅ 12-3 클레이 "평균(월령) 맥락" 적용 규칙(서버 고정)
 // - 비교 가능한 항목에만 적용: ① ② ③ ⑤
@@ -77,6 +177,25 @@ const DEV_PARA_BATCH_INSTRUCTIONS_V13 = `
 - items: 각 item은 id, title, line2(활동 설명), line3(교사 관찰), useAgeNorm(boolean)로 구성
   - useAgeNorm=true: "월령 평균(이 시기/34개월 전후)" 맥락을 허용
   - useAgeNorm=false: "월령 평균/또래 일반화" 표현을 금지(월령/이 시기/34개월 전후/또래 등 언급 금지)
+
+
+
+  [스타일 룰(styleRules) - 적용 규칙]
+- 입력 JSON에 styleRules가 있으면, devParagraph의 '표현 방식'만 styleRules에 맞게 조절하라.
+- 사실(= title/line2/line3에 있는 내용)과 관찰의 의미를 바꾸지 마라. 새로운 사실을 추가하지 마라.
+- 길이/문장 스타일:
+  - styleRules.length=short: 각 문장을 짧고 단순하게 쓴다(불필요한 설명 최소화).
+  - styleRules.sentenceStyle=shortSentences: 문장 길이를 짧게 유지한다.
+- 톤:
+  - tone=professional: 더 담백하고 정보 중심(과한 감탄/이모지 금지)
+  - tone=warm: 더 따뜻하고 공감 문장 1개까지 허용(과장 금지)
+  - tone=neutralWarm: 기본(담백+부드럽게)
+- 제안(CTA):
+  - ctaStyle=optional: 3번째 문장 끝에 "원하시면 ~해봐도 좋아요."처럼 선택형 1개만.
+  - ctaStyle=options & ctaCount=2: 3번째 문장 안에 선택지 2개를 '또는'로 묶어 1문장으로 제시한다.
+  - ctaCount=0: 제안 문장 없이 의미/전망으로 마무리한다.
+- mustAvoid에 해당하는 표현은 추가로 금지한다(진단/또래비교/불안유발/숙제톤 등).
+
 
 [핵심 작성 규칙 - 12-3 표준]
 - useAgeNorm=true인 항목에서만 월령 맥락(예: '이 시기의 아이들', '34개월 전후')을 사용할 수 있다.
@@ -146,7 +265,7 @@ function buildFallbackText(pack, data) {
 // 2) OpenAI LLM 호출 (SDK + Responses API)
 //    - item별로 "발달 맥락 문단(3문장)"만 생성
 // ---------------------------
-async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM }) {
+async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM, styleRules }) {
   console.log("🔥 generateDevParagraphsBatch HIT", process.env.RENDER_GIT_COMMIT);
 
   // ✅ OpenAI client 생성(스코프 문제 해결)
@@ -155,6 +274,7 @@ async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM }) {
   const payload = {
     childName: name,
     ageMonth,
+    styleRules: styleRules || null,
     items: itemsForLLM.map((x) => ({
       id: x.id,
       title: x.title,
@@ -323,6 +443,16 @@ async function generateLLMFeedback(data) {
   const month = Number(data.month);
   const lessonKey = String(data.lesson || "").trim(); // "1-1"
 
+  // ✅ 부모성향(설문) 수신: { q1:"1~4", q2:"1~4", q3:"1~4" }
+  // - setParentPref.php는 answers로 보냄
+  // - auto-feedback에서는 parentPref로도 받을 수 있게 여유 처리
+  const parentPref = data.parentPref || data.answers || null;
+  const styleRules = parentPref ? buildStyleRules(parentPref) : null;
+
+
+
+
+
   // ✅ 1) pack 먼저 확보
   let pack = null;
   try {
@@ -356,6 +486,12 @@ async function generateLLMFeedback(data) {
     return fallbackText;
   }
 
+
+  if (styleRules) console.log("✅ parent styleRules:", styleRules);
+
+
+
+
   try {
     // 4) LLM에 보낼 item 목록 구성 (pack 기준)
     const itemsForLLM = [];
@@ -383,7 +519,7 @@ async function generateLLMFeedback(data) {
     if (itemsForLLM.length === 0) return fallbackText;
 
     // 5) LLM 1회 호출
-    const devMap = await generateDevParagraphsBatch({ name, ageMonth, itemsForLLM });
+    const devMap = await generateDevParagraphsBatch({ name, ageMonth, itemsForLLM, styleRules });
 
     // 6) 최종 섹션 조립
     const sections = [];
