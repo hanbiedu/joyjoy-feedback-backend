@@ -252,31 +252,33 @@ function escapeRegExp(s = "") {
  * callName/fullName 뒤에 붙은 '님/씨'를 (공백 포함) 제거한다.
  */
 function normalizeKidNameInText(text, fullName) {
-  if (!text) return text;
+  try {
+    if (!text) return text;
 
-  const callName = toKidCallName(fullName);
-  const full = String(fullName || "").trim();
-  const call = String(callName || "").trim();
+    const full = String(fullName || "").trim();
+    const call = toKidCallName(full);
 
-  const fullEsc = escapeRegExp(full);
-  const callEsc = escapeRegExp(call);
+    // full이 비어있으면 "님/씨"만 정리하지 말고 그대로 반환 (안전)
+    if (!full) return text;
 
-  // 1) "백채유 님", "백채유님", "백채유  님" → "채유"
-  if (full) {
+    const fullEsc = escapeRegExp(full);
+    const callEsc = escapeRegExp(call);
+
+    // 1) "백채유 님" / "백채유님" / "백채유  님은" → "채유는"
     text = text.replace(new RegExp(`${fullEsc}\\s*(님|씨)`, "g"), call);
-  }
 
-  // 2) "백채유" (존칭 없더라도) → "채유"  (성 제거 목적)
-  if (full && call && full !== call) {
-    text = text.replace(new RegExp(fullEsc, "g"), call);
-  }
-
-  // 3) "채유 님", "채유님", "채유 씨" → "채유"
-  if (call) {
+    // 2) callName 쪽도 동일 정리: "채유 님" → "채유"
     text = text.replace(new RegExp(`${callEsc}\\s*(님|씨)`, "g"), call);
-  }
 
-  return text;
+    // 3) 조사 붙는 케이스까지 정리: "채유 님은" → "채유는"
+    // (위 1,2로 대부분 해결되지만 안전하게)
+    text = text.replace(new RegExp(`${callEsc}\\s*(은|는|이|가|을|를|와|과)`, "g"), `${call}$1`);
+
+    return text;
+  } catch (e) {
+    console.error("normalizeKidNameInText ERROR:", e?.stack || e);
+    return text; // 실패해도 원문 반환 (절대 생성이 멈추지 않게)
+  }
 }
 
 
