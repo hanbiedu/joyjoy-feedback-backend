@@ -447,11 +447,13 @@ async function generateLLMFeedback(data) {
   // - setParentPref.php는 answers로 보냄
   // - auto-feedback에서는 parentPref로도 받을 수 있게 여유 처리
   const parentPref = data.parentPref || data.answers || null;
-  const styleRules = parentPref ? buildStyleRules(parentPref) : null;
-  if (styleRules) console.log("✅ parent styleRules:", styleRules);
-  else console.log("styleRules is null>>>>>>>>>>>>>>>");
+  const styleRules = buildStyleRules(parentPref || {});
+  console.log("MARK_STYLE_RULES_SUMMARY", {
+    length: styleRules.length,
+    tone: styleRules.tone,
+    ctaStyle: styleRules.ctaStyle
+  });
 
-  console.log("✅ parent styleRules:", styleRules);
 
 
 
@@ -490,7 +492,7 @@ async function generateLLMFeedback(data) {
   }
 
 
-  
+
 
 
 
