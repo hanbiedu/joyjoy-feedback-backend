@@ -95,39 +95,18 @@ function buildStyleRules(parentPref) {
   if (q2 === "3") rules.focus.push("emotionalSafety");
   if (q2 === "4") rules.focus.push("personalization");
 
-  // ---------------------------
-  // Q3: 보호자 참여 방식
-  // 1 같이 참여 / 2 지켜봄 / 3 중간 도움 / 4 맡기고 다른 일
-  // ---------------------------
-  if (q3 === "1") {
-    rules.length = "medium";
-    rules.tone = "warm";
-    rules.ctaStyle = "options";
-    rules.ctaCount = 2; // 함께할 수 있는 선택지 2개까지
-  } else if (q3 === "2") {
-    rules.length = "medium";
-    rules.tone = "neutralWarm";
-    rules.ctaStyle = "optional";
-    rules.ctaCount = 1;
-  } else if (q3 === "3") {
-    rules.length = "medium";
-    rules.tone = "neutralWarm";
-    rules.ctaStyle = "stepByStep"; // “도움 주는 타이밍/방법”을 1~2단계로
-    rules.ctaCount = 1;
-  } else if (q3 === "4") {
-    // ✅ 맡기고 다른 일: 간결/옵션형(숙제톤 금지)
-    rules.length = "short";
-    rules.tone = "neutralWarm";
-    rules.sentenceStyle = "shortSentences";
-    rules.ctaStyle = "optional";
-    rules.ctaCount = 1;
-  }
+
 
   // ---------------------------
   // 불안 완화 강도(안정/월령중심이면 조금 올림)
   // ---------------------------
-  if (q1 === "4" || q2 === "3") rules.reassuranceLevel = "high";
-  else if (q1 === "1") rules.reassuranceLevel = "medium";
+  // 길이(정보 밀도) – q1/q2만 반영
+  if (q1 === "3" || q2 === "1" || q2 === "4") {
+    rules.length = "long";   // 발달 의미/맞춤 관심
+  } else {
+    rules.length = "medium"; // 기본
+  }
+
 
   // ---------------------------
   // 중복 제거 + focus 비었으면 기본값
@@ -139,6 +118,23 @@ function buildStyleRules(parentPref) {
 }
 
 
+async function fetchParentPrefFromPhp(parent_id) {
+  if (!parent_id) return null;
+
+
+
+  const url = `https://joyjoy.co.kr/feedback/parents/getParentPref.php?parent_id=${encodeURIComponent(parent_id)}`;
+
+  try {
+    const r = await fetch(url, { method: "GET" });
+    const j = await r.json().catch(() => null);
+    if (!r.ok || !j) return null;
+    return j.answers || null;
+  } catch (e) {
+    console.error("fetchParentPrefFromPhp error:", e?.message || e);
+    return null;
+  }
+}
 
 
 
@@ -190,10 +186,7 @@ const DEV_PARA_BATCH_INSTRUCTIONS_V13 = `
   - tone=professional: 더 담백하고 정보 중심(과한 감탄/이모지 금지)
   - tone=warm: 더 따뜻하고 공감 문장 1개까지 허용(과장 금지)
   - tone=neutralWarm: 기본(담백+부드럽게)
-- 제안(CTA):
-  - ctaStyle=optional: 3번째 문장 끝에 "원하시면 ~해봐도 좋아요."처럼 선택형 1개만.
-  - ctaStyle=options & ctaCount=2: 3번째 문장 안에 선택지 2개를 '또는'로 묶어 1문장으로 제시한다.
-  - ctaCount=0: 제안 문장 없이 의미/전망으로 마무리한다.
+
 - mustAvoid에 해당하는 표현은 추가로 금지한다(진단/또래비교/불안유발/숙제톤 등).
 
 
@@ -557,6 +550,18 @@ app.post("/api/auto-feedback", async (req, res) => {
     console.log("💥 /api/auto-feedback 호출됨!");
     const data = req.body || {};
     console.log("auto-feedback 요청 데이터:", JSON.stringify(data, null, 2));
+
+
+    // ✅ 1) parent_id 추출 (설문 저장 payload는 parent_id 사용) :contentReference[oaicite:3]{index=3}
+    const parent_id = String(data.parent_id || data.parentId || data.hp || "").trim();
+
+    // ✅ 2) body에 answers/parentPref 없으면 PHP에서 조회해서 주입
+    if (!data.answers && !data.parentPref) {
+      const answers = await fetchParentPrefFromPhp(parent_id);
+      if (answers) data.answers = answers;     // ← generateLLMFeedback가 인식함 :contentReference[oaicite:4]{index=4}
+      else data.answers = null;                 // 설문 없으면 null 유지
+    }
+
 
     const llmText = await generateLLMFeedback(data);
 
