@@ -96,6 +96,79 @@ const DEV_PARA_BATCH_INSTRUCTIONS_V13 = `
 - 예: “~시기예요.” “~단계로 보여요.” “~경험이 중요해요.”
 `.trim();
 
+
+
+function toKidCallName(fullName = "") {
+  const name = String(fullName).trim().split(/\s+/).pop() || "";
+  const isHangul = /^[가-힣]+$/.test(name);
+
+  if (!isHangul) return name; // 영문/기타는 그대로
+
+  const doubleSurnames = new Set([
+    "남궁", "제갈", "선우", "서문", "황보", "독고", "사공", "공손", "동방", "어금", "망절", "장곡"
+  ]);
+
+  // 복성 + 이름(2) = 4글자
+  if (name.length === 4 && doubleSurnames.has(name.slice(0, 2))) {
+    const given = name.slice(2); // 2글자
+    return given; // "민수"
+  }
+
+  // 일반 성(1) + 이름(2) = 3글자
+  if (name.length === 3) {
+    return name.slice(1); // "한비"
+  }
+
+  // 성(1) + 이름(1) = 2글자
+  if (name.length === 2) {
+    return name.slice(1) + "이"; // "윤이"
+  }
+
+  // 그 외(예: 4글자 이상인데 복성 아님 / 예외 이름): 마지막 2글자 권장
+  if (name.length >= 2) return name.slice(-2);
+
+  return name;
+}
+
+
+function escapeRegExp(s = "") {
+  return String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * fullName(백채유) → callName(채유)로 통일하고,
+ * callName/fullName 뒤에 붙은 '님/씨'를 (공백 포함) 제거한다.
+ */
+function normalizeKidNameInText(text, fullName) {
+  try {
+    if (!text) return text;
+
+    const full = String(fullName || "").trim();
+    const call = toKidCallName(full);
+
+    // full이 비어있으면 "님/씨"만 정리하지 말고 그대로 반환 (안전)
+    if (!full) return text;
+
+    const fullEsc = escapeRegExp(full);
+    const callEsc = escapeRegExp(call);
+
+    // 1) "백채유 님" / "백채유님" / "백채유  님은" → "채유는"
+    text = text.replace(new RegExp(`${fullEsc}\\s*(님|씨)`, "g"), call);
+
+    // 2) callName 쪽도 동일 정리: "채유 님" → "채유"
+    text = text.replace(new RegExp(`${callEsc}\\s*(님|씨)`, "g"), call);
+
+    // 3) 조사 붙는 케이스까지 정리: "채유 님은" → "채유는"
+    // (위 1,2로 대부분 해결되지만 안전하게)
+    text = text.replace(new RegExp(`${callEsc}\\s*(은|는|이|가|을|를|와|과)`, "g"), `${call}$1`);
+
+    return text;
+  } catch (e) {
+    console.error("normalizeKidNameInText ERROR:", e?.stack || e);
+    return text; // 실패해도 원문 반환 (절대 생성이 멈추지 않게)
+  }
+}
+
 // (옵션) line3가 비어있을 때를 대비한 안전 문장
 function getSafeLine3(line3) {
   const t = (line3 || "").trim();
@@ -399,7 +472,9 @@ async function generateLLMFeedback(data) {
       sections.push(buildFinalSection({ title: x.title, line2: x.line2, devParagraph }));
     }
 
-    return sections.join("\n\n");
+    const out = sections.join("\n\n");
+    return normalizeKidNameInText(out, name); // name은 원본 fullName(예: 백채유)
+    
   } catch (err) {
     console.error("OpenAI 호출 중 에러:", err);
     // ✅ 에러 시에도 pack 기반 fallback
