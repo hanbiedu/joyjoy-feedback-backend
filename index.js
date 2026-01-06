@@ -446,6 +446,14 @@ async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM, styleRu
 
   try {
     obj = safeParseJsonFromText(raw);
+
+    // ✅ DEBUG: 모델이 실제로 summary를 주는지 확인
+    console.log("[LLM_OBJ_KEYS]", obj ? Object.keys(obj) : null);
+    console.log("[LLM_SUMMARY_RAW]", typeof obj?.summary, (obj?.summary || "").slice(0, 200));
+    console.log("[LLM_ITEMS_COUNT]", Array.isArray(obj?.items) ? obj.items.length : null);
+
+
+
   } catch (e) {
     console.error("❌ JSON parse failed. retry once.", e);
     const raw2 = await callOnce();
@@ -632,6 +640,11 @@ async function generateLLMFeedback(data) {
     }
 
     const out = sections.join("\n\n");
+
+    console.log("[FINAL_HAS_SUMMARY]", !!summary, "[SUMMARY_LEN]", (summary || "").length);
+
+
+
     const finalOut = summary ? `${out}\n\n${summary}` : out;
     return normalizeKidNameInText(finalOut, name);
 
