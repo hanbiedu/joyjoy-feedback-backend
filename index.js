@@ -264,6 +264,11 @@ function normalizeKidNameInText(text, fullName) {
     const fullEsc = escapeRegExp(full);
     const callEsc = escapeRegExp(call);
 
+    text = text.replace(
+      new RegExp(`${fullEsc}\\s*(은|는|이|가|을|를|와|과)`, "g"),
+      `${call}$1`
+    );
+
     // 1) "백채유 님" / "백채유님" / "백채유  님은" → "채유는"
     text = text.replace(new RegExp(`${fullEsc}\\s*(님|씨)`, "g"), call);
 
