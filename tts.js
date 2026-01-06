@@ -10,12 +10,12 @@ function getClient() {
   return new textToSpeech.TextToSpeechClient({ credentials });
 }
 
-// ✅ 라우트가 붙었는지 확인용 (GET /api/tts-ping)
+// ✅ 라우트 붙었는지 확인용
 router.get("/tts-ping", (req, res) => {
-  res.json({ ok: true });
+  res.json({ ok: true, ts: Date.now() });
 });
 
-// ✅ 실제 TTS (POST /api/tts)
+// ✅ 실제 TTS
 router.post("/tts", async (req, res) => {
   try {
     const { ssml, text, voiceName } = req.body || {};
