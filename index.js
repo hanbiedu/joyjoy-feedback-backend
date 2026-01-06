@@ -102,6 +102,17 @@ const DEV_PARA_BATCH_INSTRUCTIONS_V13 = `
 
 - mustAvoid에 해당하는 표현은 추가로 금지한다(진단/또래비교/불안유발/숙제톤 등).
 
+[추가 출력 - 총평(summary)]
+- summary는 수업 전체를 한 단락으로 정리한 문장이다.
+- 개별 활동을 1~5번처럼 나열하지 말고, 공통 흐름/참여 모습/경험의 의미를 묶어라.
+- 부모성향(styleRules)을 가장 적극적으로 반영하라(톤/정보 밀도/관점).
+- title/line2/line3 범위를 벗어난 새로운 사실(예: 집에서의 행동, 성향 단정)은 추가하지 마라.
+- 진단/또래비교/불안유발 표현은 devParagraph와 동일하게 금지한다.
+- 길이는 2~3문장으로 제한한다(줄바꿈 없이 한 줄 텍스트).
+- '총평', '마무리', 번호, 제목 같은 표식은 쓰지 말고 문장만 출력하라.
+- summary에는 아이 이름을 최대 1회만 사용할 수 있다(안 써도 됨).
+
+
 [핵심 작성 규칙 - 12-3 표준]
 - useAgeNorm=true인 항목에서만 월령 맥락(예: '이 시기의 아이들', '34개월 전후')을 사용할 수 있다.
 - 월령 맥락 문구는 문장 '도입부 고정'으로 반복하지 말고, 문장 중간/후반에 자연스럽게 섞어라.
@@ -382,7 +393,8 @@ async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM, styleRu
               DEV_PARA_BATCH_INSTRUCTIONS_V13 +
               "\n\n" +
               "반드시 JSON만 출력한다. JSON 외 텍스트는 절대 출력하지 않는다.\n" +
-              "devParagraph에는 숫자 레벨(예: '4:', '3')을 절대 포함하지 마라.",
+              "devParagraph에는 숫자 레벨(예: '4:', '3')을 절대 포함하지 마라.\n" +
+              "items 배열과 summary 문자열을 반드시 함께 출력한다.",
           },
         ],
       },
@@ -400,7 +412,7 @@ async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM, styleRu
         schema: {
           type: "object",
           additionalProperties: false,
-          required: ["items"],
+          required: ["items", "summary"],
           properties: {
             items: {
               type: "array",
@@ -416,6 +428,7 @@ async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM, styleRu
                 },
               },
             },
+            summary: { type: "string" }
           },
         },
       },
@@ -441,13 +454,22 @@ async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM, styleRu
 
   const arr = Array.isArray(obj?.items) ? obj.items : [];
 
-  const map = new Map();
+  // ✅ devParagraph map 생성
+  const devMap = new Map();
   for (const it of arr) {
     const id = Number(it?.id);
     const dev = typeof it?.devParagraph === "string" ? it.devParagraph.trim() : "";
-    if (!Number.isNaN(id) && dev) map.set(id, normalize3Lines(dev));
+    if (!Number.isNaN(id) && dev) devMap.set(id, normalize3Lines(dev));
   }
-  return map;
+
+  // ✅ summary 추출 (줄바꿈 금지 규칙이 있으니 내부 개행 제거)
+  let summary = typeof obj?.summary === "string" ? obj.summary.trim() : "";
+  if (summary) {
+    summary = summary.replace(/\r?\n+/g, " ").replace(/\s{2,}/g, " ").trim();
+  }
+
+  // ✅ 반환 형태 변경: { devMap, summary }
+  return { devMap, summary }
 }
 
 function safeParseJsonFromText(s) {
@@ -592,7 +614,8 @@ async function generateLLMFeedback(data) {
     if (itemsForLLM.length === 0) return fallbackText;
 
     // 5) LLM 1회 호출
-    const devMap = await generateDevParagraphsBatch({ name, ageMonth, itemsForLLM, styleRules });
+    const { devMap, summary } = await generateDevParagraphsBatch({ name, ageMonth, itemsForLLM, styleRules });
+
 
     // 6) 최종 섹션 조립
     const sections = [];
@@ -609,7 +632,8 @@ async function generateLLMFeedback(data) {
     }
 
     const out = sections.join("\n\n");
-    return normalizeKidNameInText(out, name); // name은 원본 fullName(예: 백채유)
+    const finalOut = summary ? `${out}\n\n${summary}` : out;
+    return normalizeKidNameInText(finalOut, name);
 
   } catch (err) {
     console.error("OpenAI 호출 중 에러:", err);
