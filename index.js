@@ -354,6 +354,9 @@ async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM, styleRu
   // ✅ OpenAI client 생성(스코프 문제 해결)
   const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+  console.log(process.env.OPENAI_API_KEY);
+
+
   const payload = {
     childName: name,
     ageMonth,
