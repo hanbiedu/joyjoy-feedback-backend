@@ -42,7 +42,7 @@ app.use(
   })
 );
 
-const ttsRouter = require("./routes/tts");
+const ttsRouter = require("./tts");
 app.use("/api", ttsRouter);
 
 
