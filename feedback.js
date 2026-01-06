@@ -1,51 +1,94 @@
-// === line1, line2를 feedback_items.json에서 읽어서 HTML에 채우는 함수들 ===
-async function loadActivityLines() {
-  try {
-    const jsonPath = getItemsJsonPath();
-    const res = await fetch(jsonPath, { cache: "no-cache" });
+// === line1, line2, options를 "월별 평가항목 JSON(예: items/item12.json)"에서 읽고,
+// 그 안의 "주차(예: week1)"를 선택해 HTML에 채우는 함수들 ===
+//
+// URL 예시:
+// - feedback.html?lesson=12-1        (추천: month-week 한번에)
+// - feedback.html?month=12&week=1
+// - (과거 호환) feedback.html?items=12-1
+// - week=week1 형태도 허용 (예: ?month=12&week=week1)
+//
+// 파일명 규칙(기본): items/item{month}.json  (예: items/item12.json)
 
-    if (!res.ok) {
-      console.error("❌ items json 요청 실패:", jsonPath, res.status, res.statusText);
+function getMonthWeekFromUrl() {
+  const p = new URLSearchParams(window.location.search);
+
+  // 1) ?lesson=12-1  또는 ?items=12-1 (legacy)
+  const lessonLike = p.get("lesson") || p.get("items");
+  if (lessonLike) {
+    const parts = String(lessonLike).split("-");
+    const month = parts[0] || "12";
+    const weekNum = parts[1] || "1";
+    const w = String(weekNum).startsWith("week") ? String(weekNum).replace("week", "") : String(weekNum);
+    return { month, weekKey: `week${w}`, weekNum: w };
+  }
+
+  // 2) ?month=12&week=1  또는 ?month=12&week=week1
+  const month = p.get("month") || "12";
+  const weekRaw = p.get("week") || "1";
+  const w = String(weekRaw).startsWith("week") ? String(weekRaw).replace("week", "") : String(weekRaw);
+
+  return { month, weekKey: `week${w}`, weekNum: w };
+}
+
+function buildMonthlyItemsPathCandidates(month) {
+  const m = String(month);
+  // 우선순위: items/item12.json -> item12.json -> items/feedback_items.json(마지막 fallback)
+  return [
+    `items/item${m}.json`,
+    `item${m}.json`,
+    `items/feedback_items.json`,
+  ];
+}
+
+async function loadActivityLines() {
+  const { month, weekKey } = getMonthWeekFromUrl(); // 예: { month:"12", weekKey:"week1" }
+  const candidates = buildMonthlyItemsPathCandidates(month);
+
+  try {
+    let res = null;
+    let usedPath = null;
+
+    for (const p of candidates) {
+      const r = await fetch(p, { cache: "no-cache" });
+      if (r.ok) {
+        res = r;
+        usedPath = p;
+        break;
+      }
+    }
+
+    if (!res) {
+      console.error("❌ 월별 평가항목 JSON 요청 실패(모든 후보 경로):", candidates.join(", "));
       return;
     }
 
-
-
     const data = await res.json();
-    console.log("✅ feedback_items.json 로드 완료:", data);
 
-    const lesson = monthly?.lessons?.[lessonKey];
-    if (!lesson) {
-      console.error("주차 키 없음:", lessonKey, "in", jsonPath);
-      return null;
+    // 월별 평가항목 JSON(item12.json) 구조: { week1: { item1..item6 }, week2: ... } fileciteturn2file0
+    const weekData = data?.[weekKey];
+
+    // 마지막 fallback(items/feedback_items.json)일 수도 있어서 두 케이스 모두 지원
+    const itemsObj = weekData || data;
+
+    if (!itemsObj?.item1) {
+      console.error("❌ 주차 데이터/아이템 구조를 찾지 못함:", { month, weekKey, usedPath });
+      return;
     }
 
+    // 제목은 JSON에 없으니 URL 기준으로 생성
+    if (typeof setLessonTitle === "function") setLessonTitle(`${month}월 ${weekKey}`);
 
-
-
-    
-
-    fillActivity("item1", data.item1);
-    fillActivity("item2", data.item2);
-    fillActivity("item3", data.item3);
-    fillActivity("item4", data.item4);
-    fillActivity("item5", data.item5);
-    fillActivity("item6", data.item6);
+    fillActivity("item1", itemsObj.item1);
+    fillActivity("item2", itemsObj.item2);
+    fillActivity("item3", itemsObj.item3);
+    fillActivity("item4", itemsObj.item4);
+    fillActivity("item5", itemsObj.item5);
+    fillActivity("item6", itemsObj.item6);
   } catch (err) {
-    console.error("❌ feedback_items.json 불러오는 중 오류:", err);
+    console.error("❌ 월별 평가항목 JSON 불러오는 중 오류:", err);
   }
 }
 
-
-function getItemsJsonPath() {
-  const p = new URLSearchParams(window.location.search);
-
-  const key = p.get("lesson");//12-3
-  const month = key.split("-")[0];
-  return `items/item.${month}.json`; 
-  // const key = params.get("items"); // 예: 12-3
-  // return key ? `items/${key}.json` : "items/feedback_items.json";
-}
 
 function fillActivity(itemKey, itemData) {
   if (!itemData) return;
@@ -61,8 +104,6 @@ function fillActivity(itemKey, itemData) {
     optionsContainer.innerHTML = generateRadioButtons(itemKey, itemData.options);
   }
 }
-
-
 
 function generateRadioButtons(name, options) {
   let html = "";

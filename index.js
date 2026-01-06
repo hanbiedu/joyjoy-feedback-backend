@@ -20,7 +20,8 @@ const app = express();
 
 // OpenAI SDK는 호출 시점에 client를 생성합니다(키 누락/갱신 이슈 방지)
 
-app.use(express.json());
+app.use(express.json({ limit: "1mb" }));
+
 // ✅ JSON body 파싱 실패를 JSON으로 반환 (라우트보다 위에 있어야 함)
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && "body" in err) {
@@ -40,6 +41,14 @@ app.use(
     origin: "*",
   })
 );
+
+const ttsRouter = require("./routes/tts");
+app.use("/api", ttsRouter);
+
+
+
+
+
 
 app.get("/", (req, res) => {
   res.send("JOYJOY Feedback Backend is running.");
@@ -182,6 +191,9 @@ function buildStyleRules(parentPref) {
 
   return rules;
 }
+
+
+
 
 
 async function fetchParentPrefFromPhp(parent_id) {
