@@ -106,6 +106,11 @@ const DEV_PARA_BATCH_INSTRUCTIONS_V13 = `
 - summary는 수업 전체를 한 단락으로 정리한 문장이다.
 - 개별 활동을 1~5번처럼 나열하지 말고, 공통 흐름/참여 모습/경험의 의미를 묶어라.
 - 부모성향(styleRules)을 가장 적극적으로 반영하라(톤/정보 밀도/관점).
+- styleRules.focus에 따라 summary의 첫 문장 초점을 정한다:
+  - participation: 참여 태도/집중/시도 중심
+  - emotionalSafety: 편안함/안정감/즐거움 중심
+  - developmentMeaning: 경험의 의미/쌓임 중심
+  - ageFit: 무리 없는 흐름/자연스러운 과정 중심
 - title/line2/line3 범위를 벗어난 새로운 사실(예: 집에서의 행동, 성향 단정)은 추가하지 마라.
 - 진단/또래비교/불안유발 표현은 devParagraph와 동일하게 금지한다.
 - 길이는 2~3문장으로 제한한다(줄바꿈 없이 한 줄 텍스트).
