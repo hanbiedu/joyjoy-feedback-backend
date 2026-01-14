@@ -64,7 +64,7 @@ const AGE_NORM_ALLOWED_IDS = new Set([1, 2, 3, 5]);
 // ---------------------------
 // 1) 관찰 텍스트 생성 유틸들
 // ---------------------------
-
+const WEEKLY_SUMMARY_BY_DOMAIN_RULES = {};
 
 // ---------------------------
 // 1) LLM 프롬프트 v1.3 (발달 맥락 문단 전용 + 12-3 규칙 반영)
@@ -386,11 +386,7 @@ function buildFallbackText(pack, data) {
 async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM, styleRules }) {
   console.log("🔥 generateDevParagraphsBatch HIT", process.env.RENDER_GIT_COMMIT);
 
-  // ✅ OpenAI client 생성(스코프 문제 해결)
   const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-  console.log(process.env.OPENAI_API_KEY);
-
 
   const payload = {
     childName: name,
@@ -398,7 +394,7 @@ async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM, styleRu
     styleRules: styleRules || null,
     items: itemsForLLM.map((x) => ({
       id: x.id,
-      domain: x.domain || null,   // ✅ 추가
+      domain: x.domain || null,
       title: x.title,
       line2: x.line2,
       line3: x.line3,
@@ -417,11 +413,9 @@ async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM, styleRu
             text:
               DEV_PARA_BATCH_INSTRUCTIONS_V13 +
               "\n\n" +
-              WEEKLY_SUMMARY_BY_DOMAIN_RULES +
-              "\n\n" +
               "반드시 JSON만 출력한다. JSON 외 텍스트는 절대 출력하지 않는다.\n" +
               "devParagraph에는 숫자 레벨(예: '4:', '3')을 절대 포함하지 마라.\n" +
-              "items 배열과 summary 문자열을 반드시 함께 출력한다.",
+              "items 배열과 summary 문자열, summary_by_domain 객체를 반드시 함께 출력한다.",
           },
         ],
       },
@@ -430,7 +424,6 @@ async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM, styleRu
         content: [{ type: "input_text", text: JSON.stringify(payload) }],
       },
     ],
-    // ✅ 출력 스키마 고정
     text: {
       format: {
         type: "json_schema",
@@ -444,7 +437,7 @@ async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM, styleRu
             items: {
               type: "array",
               minItems: 1,
-              maxItems: 12, // items 가변 대응
+              maxItems: 12,
               items: {
                 type: "object",
                 additionalProperties: false,
@@ -465,9 +458,9 @@ async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM, styleRu
                 cognition: { type: "string" },
                 language: { type: "string" },
                 motor: { type: "string" },
-                social: { type: "string" }
-              }
-            }
+                social: { type: "string" },
+              },
+            },
           },
         },
       },
@@ -485,14 +478,6 @@ async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM, styleRu
 
   try {
     obj = safeParseJsonFromText(raw);
-
-    // ✅ DEBUG: 모델이 실제로 summary를 주는지 확인
-    // console.log("[LLM_OBJ_KEYS]", obj ? Object.keys(obj) : null);
-    // console.log("[LLM_SUMMARY_RAW]", typeof obj?.summary, (obj?.summary || "").slice(0, 200));
-    // console.log("[LLM_ITEMS_COUNT]", Array.isArray(obj?.items) ? obj.items.length : null);
-
-
-
   } catch (e) {
     console.error("❌ JSON parse failed. retry once.", e);
     const raw2 = await callOnce();
@@ -501,7 +486,6 @@ async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM, styleRu
 
   const arr = Array.isArray(obj?.items) ? obj.items : [];
 
-  // ✅ devParagraph map 생성
   const devMap = new Map();
   for (const it of arr) {
     const id = Number(it?.id);
@@ -509,15 +493,20 @@ async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM, styleRu
     if (!Number.isNaN(id) && dev) devMap.set(id, normalize3Lines(dev));
   }
 
-  // ✅ summary 추출 (줄바꿈 금지 규칙이 있으니 내부 개행 제거)
   let summary = typeof obj?.summary === "string" ? obj.summary.trim() : "";
   if (summary) {
     summary = summary.replace(/\r?\n+/g, " ").replace(/\s{2,}/g, " ").trim();
   }
 
-  // ✅ 반환 형태 변경: { devMap, summary }
-  return { devMap, summary, summary_by_domain }
+  // ✅ 여기서 선언(이게 없어서 ReferenceError 났던 것)
+  const summary_by_domain =
+    obj?.summary_by_domain && typeof obj.summary_by_domain === "object"
+      ? obj.summary_by_domain
+      : null;
+
+  return { devMap, summary, summary_by_domain };
 }
+
 
 function safeParseJsonFromText(s) {
   if (!s) throw new Error("Empty model output");
@@ -681,16 +670,17 @@ async function generateLLMFeedback(data) {
     })();
 
   // ✅ 3) pack 없으면 여기서 종료 (다른 수업 템플릿 절대 사용 금지)
-  if (!pack) return fallbackText;
+  if (!pack) return { autoText: fallbackText, summary_by_domain: null };
 
   // ✅ items 없으면 fallback만
-  if (items.length === 0) return fallbackText;
+  if (items.length === 0) return { autoText: fallbackText, summary_by_domain: null };
 
-  // ✅ API 키 없으면 fallback만 (pack 기반이라 안전)
+  // ✅ API 키 없으면 fallback만
   if (!process.env.OPENAI_API_KEY) {
     console.warn("OPENAI_API_KEY가 설정되어 있지 않습니다. 템플릿 문장만 사용합니다.");
-    return fallbackText;
+    return { autoText: fallbackText, summary_by_domain: null };
   }
+
 
   try {
     // 4) LLM에 보낼 item 목록 구성 (pack 기준)
@@ -721,7 +711,12 @@ async function generateLLMFeedback(data) {
     if (itemsForLLM.length === 0) return fallbackText;
 
     // 5) LLM 1회 호출
-    const { devMap, summary } = await generateDevParagraphsBatch({ name, ageMonth, itemsForLLM, styleRules });
+    const { devMap, summary } = await generateDevParagraphsBatch({
+      name,
+      ageMonth,
+      itemsForLLM,
+      styleRules
+    });
 
 
     // 6) 최종 섹션 조립
@@ -739,24 +734,20 @@ async function generateLLMFeedback(data) {
     }
 
     const out = sections.join("\n\n");
-
     console.log("[FINAL_HAS_SUMMARY]", !!summary, "[SUMMARY_LEN]", (summary || "").length);
 
-
-
     const finalOut = summary ? `${out}\n\n${summary}` : out;
+
     return {
       autoText: normalizeKidNameInText(finalOut, name),
-      summary_by_domain,
+      summary_by_domain: summary_by_domain || null,
     };
-    
 
   } catch (err) {
     console.error("OpenAI 호출 중 에러:", err);
-    // ✅ 에러 시에도 pack 기반 fallback
     return { autoText: fallbackText, summary_by_domain: null };
-
   }
+
 }
 
 
@@ -780,16 +771,15 @@ app.post("/api/auto-feedback", async (req, res) => {
     }
 
 
-    const llmText = await generateLLMFeedback(data);
+    const { autoText, summary_by_domain } = await generateLLMFeedback(data);
 
-    // (선택) ruleBasedText를 유지하려면: generateLLMFeedback가 pack 기반 fallback을 이미 만듦.
-    // 여기서는 안전하게 llmText만 내려도 됨.
     return res.json({
       success: true,
-      autoText: llmText,
-      summary_by_domain,   // ✅ 추가
+      autoText,
+      summary_by_domain,
       build_marker: "2025-12-28-joyjoy-v_latest",
     });
+
   } catch (err) {
     console.error("자동 피드백 생성 에러:", err);
 
