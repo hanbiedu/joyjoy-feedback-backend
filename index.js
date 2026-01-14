@@ -64,7 +64,6 @@ const AGE_NORM_ALLOWED_IDS = new Set([1, 2, 3, 5]);
 // ---------------------------
 // 1) 관찰 텍스트 생성 유틸들
 // ---------------------------
-const WEEKLY_SUMMARY_BY_DOMAIN_RULES = {};
 
 // ---------------------------
 // 1) LLM 프롬프트 v1.3 (발달 맥락 문단 전용 + 12-3 규칙 반영)
@@ -239,6 +238,7 @@ async function fetchParentPrefFromPhp(parent_id) {
   const url = `https://jo2jo2.co.kr/feedback/parents/getParentPref.php?parent_id=${encodeURIComponent(parent_id)}`;
 
   try {
+    const fetch = global.fetch || require("node-fetch");
     const r = await fetch(url, { method: "GET" });
     const txt = await r.text(); // 먼저 text로 받고
     let j = null;
@@ -708,10 +708,10 @@ async function generateLLMFeedback(data) {
       });
     }
 
-    if (itemsForLLM.length === 0) return fallbackText;
+    if (itemsForLLM.length === 0) return { autoText: fallbackText, summary_by_domain: null };
 
     // 5) LLM 1회 호출
-    const { devMap, summary } = await generateDevParagraphsBatch({
+    const { devMap, summary, summary_by_domain  } = await generateDevParagraphsBatch({
       name,
       ageMonth,
       itemsForLLM,
