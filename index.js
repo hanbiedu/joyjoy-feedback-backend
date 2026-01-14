@@ -630,6 +630,7 @@ function getSelectedOptionLabelFromPack(pack, itemId, value) {
 }
 
 async function generateLLMFeedback(data) {
+
   const name = data.childName || data.child_name || "아이";
   const ageMonthRaw = data.ageMonth ?? data.age_month;
   const ageMonth =
@@ -647,6 +648,7 @@ async function generateLLMFeedback(data) {
   // ✅ 1) pack 먼저 확보
   let pack = null;
   let monthJson = null;
+  let summary_by_domain = null;  // ✅ 어떤 경로에서도 undefined 참조 방지
 
   try {
     monthJson = loadMonthItems(month);
@@ -711,12 +713,17 @@ async function generateLLMFeedback(data) {
     if (itemsForLLM.length === 0) return { autoText: fallbackText, summary_by_domain: null };
 
     // 5) LLM 1회 호출
-    const { devMap, summary, summary_by_domain  } = await generateDevParagraphsBatch({
+    const llm = await generateDevParagraphsBatch({
       name,
       ageMonth,
       itemsForLLM,
       styleRules
     });
+    
+    const devMap = llm.devMap;
+    const summary = llm.summary;
+    summary_by_domain = llm.summary_by_domain || null; // ✅ 여기서 확정
+    
 
 
     // 6) 최종 섹션 조립
@@ -740,8 +747,9 @@ async function generateLLMFeedback(data) {
 
     return {
       autoText: normalizeKidNameInText(finalOut, name),
-      summary_by_domain: summary_by_domain || null,
+      summary_by_domain,
     };
+    
 
   } catch (err) {
     console.error("OpenAI 호출 중 에러:", err);
