@@ -14,6 +14,18 @@ try {
   console.log("❌ openai 모듈 로드 불가", e?.message);
 }
 
+
+process.on("unhandledRejection", (reason) => {
+  console.error("💥 unhandledRejection:", reason);
+});
+process.on("uncaughtException", (err) => {
+  console.error("💥 uncaughtException:", err);
+});
+
+
+
+
+
 // const feedbackItems = require("./items/feedback_items.json"); // 🔥 경로 주의!
 
 const app = express();
@@ -758,11 +770,11 @@ async function generateLLMFeedback(data) {
       itemsForLLM,
       styleRules
     });
-    
+
     const devMap = llm.devMap;
     const summary = llm.summary;
     summary_by_domain = llm.summary_by_domain || null; // ✅ 여기서 확정
-    
+
 
 
     // 6) 최종 섹션 조립
@@ -788,7 +800,7 @@ async function generateLLMFeedback(data) {
       autoText: normalizeKidNameInText(finalOut, name),
       summary_by_domain,
     };
-    
+
 
   } catch (err) {
     console.error("OpenAI 호출 중 에러:", err);
@@ -820,6 +832,9 @@ app.post("/api/auto-feedback", async (req, res) => {
 
     const { autoText, summary_by_domain } = await generateLLMFeedback(data);
 
+
+    console.log("✅ about to send response");
+    res.on("finish", () => console.log("✅ response finished:", res.statusCode));
     return res.json({
       success: true,
       autoText,
