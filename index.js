@@ -137,6 +137,25 @@ const DEV_PARA_BATCH_INSTRUCTIONS_V13 = `
 `.trim();
 
 
+// ---------------------------
+// 주간 요약(summary_json) 전용 프롬프트
+// ---------------------------
+const WEEKLY_SUMMARY_BY_DOMAIN_PROMPT = `
+너는 조이조이(JoyJoy) 주간 수업 요약 생성기다.
+
+출력은 반드시 JSON 하나로만 반환한다.
+
+규칙:
+1) summary_by_domain은 아래 5개 키를 반드시 모두 포함한다.
+   - sensory, cognition, language, motor, social
+2) 각 값은 부모 홈 화면에 바로 보여줄 한 줄 요약이다.
+3) 과장, 진단, 비교 표현은 금지한다.
+4) 해당 영역의 관찰 item이 없으면
+   "이번 수업은 활동 참여 중심으로 관찰했어요."를 사용한다.
+`.trim();
+
+
+
 
 
 // ---------------------------
@@ -379,6 +398,7 @@ async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM, styleRu
     styleRules: styleRules || null,
     items: itemsForLLM.map((x) => ({
       id: x.id,
+      domain: x.domain || null,   // ✅ 추가
       title: x.title,
       line2: x.line2,
       line3: x.line3,
@@ -396,6 +416,8 @@ async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM, styleRu
             type: "input_text",
             text:
               DEV_PARA_BATCH_INSTRUCTIONS_V13 +
+              "\n\n" +
+              WEEKLY_SUMMARY_BY_DOMAIN_RULES +
               "\n\n" +
               "반드시 JSON만 출력한다. JSON 외 텍스트는 절대 출력하지 않는다.\n" +
               "devParagraph에는 숫자 레벨(예: '4:', '3')을 절대 포함하지 마라.\n" +
@@ -417,7 +439,7 @@ async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM, styleRu
         schema: {
           type: "object",
           additionalProperties: false,
-          required: ["items", "summary"],
+          required: ["items", "summary", "summary_by_domain"],
           properties: {
             items: {
               type: "array",
@@ -433,7 +455,19 @@ async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM, styleRu
                 },
               },
             },
-            summary: { type: "string" }
+            summary: { type: "string" },
+            summary_by_domain: {
+              type: "object",
+              additionalProperties: false,
+              required: ["sensory", "cognition", "language", "motor", "social"],
+              properties: {
+                sensory: { type: "string" },
+                cognition: { type: "string" },
+                language: { type: "string" },
+                motor: { type: "string" },
+                social: { type: "string" }
+              }
+            }
           },
         },
       },
@@ -453,9 +487,9 @@ async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM, styleRu
     obj = safeParseJsonFromText(raw);
 
     // ✅ DEBUG: 모델이 실제로 summary를 주는지 확인
-    console.log("[LLM_OBJ_KEYS]", obj ? Object.keys(obj) : null);
-    console.log("[LLM_SUMMARY_RAW]", typeof obj?.summary, (obj?.summary || "").slice(0, 200));
-    console.log("[LLM_ITEMS_COUNT]", Array.isArray(obj?.items) ? obj.items.length : null);
+    // console.log("[LLM_OBJ_KEYS]", obj ? Object.keys(obj) : null);
+    // console.log("[LLM_SUMMARY_RAW]", typeof obj?.summary, (obj?.summary || "").slice(0, 200));
+    // console.log("[LLM_ITEMS_COUNT]", Array.isArray(obj?.items) ? obj.items.length : null);
 
 
 
@@ -482,7 +516,7 @@ async function generateDevParagraphsBatch({ name, ageMonth, itemsForLLM, styleRu
   }
 
   // ✅ 반환 형태 변경: { devMap, summary }
-  return { devMap, summary }
+  return { devMap, summary, summary_by_domain }
 }
 
 function safeParseJsonFromText(s) {
@@ -541,6 +575,60 @@ function loadMonthItems(month) {
   return JSON.parse(raw);
 }
 
+function getTemplateItemById(monthItems, lessonKey, id) {
+  const lesson = monthItems?.[lessonKey];
+  if (!lesson) return null;
+  const key = `item${Number(id)}`;
+  return lesson?.[key] || null;
+}
+
+/**
+ * DB에 저장된 items_json이 구버전([{id,value}])이어도
+ * 템플릿(item{month}.json)로부터 domain/line1/line2를 채워서 반환한다.
+ *
+ * - 신버전([{id,value,domain,...}])은 그대로 통과
+ * - value는 Number로 정규화
+ */
+function enrichItemsWithDomain(itemsArr, monthItems, lessonKey) {
+  const src = Array.isArray(itemsArr) ? itemsArr : [];
+
+  return src
+    .map((it) => {
+      const id = Number(it?.id);
+      if (!Number.isFinite(id) || id <= 0) return null;
+
+      const valueRaw = it?.value;
+      const value =
+        valueRaw === "" || valueRaw === null || valueRaw === undefined
+          ? null
+          : Number(valueRaw);
+
+      // 이미 domain이 있으면 그대로 사용(신버전)
+      if (it?.domain) {
+        return {
+          id,
+          value,
+          domain: String(it.domain),
+          line1: it.line1 ? String(it.line1) : undefined,
+          line2: it.line2 ? String(it.line2) : undefined,
+        };
+      }
+
+      // 구버전이면 템플릿에서 찾아서 보완
+      const tmpl = getTemplateItemById(monthItems, lessonKey, id);
+
+      return {
+        id,
+        value,
+        domain: tmpl?.domain ? String(tmpl.domain) : null,
+        line1: tmpl?.line1 ? String(tmpl.line1) : undefined,
+        line2: tmpl?.line2 ? String(tmpl.line2) : undefined,
+      };
+    })
+    .filter(Boolean);
+}
+
+
 
 function getSelectedOptionLabelFromPack(pack, itemId, value) {
   const v = String(value ?? "").trim();
@@ -569,13 +657,17 @@ async function generateLLMFeedback(data) {
 
   // ✅ 1) pack 먼저 확보
   let pack = null;
+  let monthJson = null;
+
   try {
-    const monthJson = loadMonthItems(month);
+    monthJson = loadMonthItems(month);
     pack = monthJson?.[lessonKey] || null;
   } catch (e) {
     console.error("items json 로드 실패:", e);
     pack = null;
+    monthJson = null;
   }
+
 
   // ✅ 2) pack 기반 fallback 준비 (pack이 없으면 안전 텍스트만)
   const fallbackText = pack
@@ -602,8 +694,10 @@ async function generateLLMFeedback(data) {
 
   try {
     // 4) LLM에 보낼 item 목록 구성 (pack 기준)
+    const normItems = enrichItemsWithDomain(items, monthJson, lessonKey);
+
     const itemsForLLM = [];
-    for (const it of items) {
+    for (const it of normItems) {
       const v = String(it.value ?? "").trim();
       if (!v) continue; // ✅ 선택 안 한 항목은 무조건 제외
 
@@ -651,12 +745,17 @@ async function generateLLMFeedback(data) {
 
 
     const finalOut = summary ? `${out}\n\n${summary}` : out;
-    return normalizeKidNameInText(finalOut, name);
+    return {
+      autoText: normalizeKidNameInText(finalOut, name),
+      summary_by_domain,
+    };
+    
 
   } catch (err) {
     console.error("OpenAI 호출 중 에러:", err);
     // ✅ 에러 시에도 pack 기반 fallback
-    return fallbackText;
+    return { autoText: fallbackText, summary_by_domain: null };
+
   }
 }
 
@@ -688,6 +787,7 @@ app.post("/api/auto-feedback", async (req, res) => {
     return res.json({
       success: true,
       autoText: llmText,
+      summary_by_domain,   // ✅ 추가
       build_marker: "2025-12-28-joyjoy-v_latest",
     });
   } catch (err) {
@@ -709,7 +809,7 @@ app.post("/api/auto-feedback", async (req, res) => {
 
 
 // ---------------------------
-// 4) 피드백 저장 API (현재는 콘솔 로그만)
+// 4) 피드백 저장 API 
 // ---------------------------
 app.post("/api/feedback", (req, res) => {
   try {
