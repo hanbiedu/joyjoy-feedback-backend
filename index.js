@@ -14,18 +14,6 @@ try {
   console.log("❌ openai 모듈 로드 불가", e?.message);
 }
 
-
-process.on("unhandledRejection", (reason) => {
-  console.error("💥 unhandledRejection:", reason);
-});
-process.on("uncaughtException", (err) => {
-  console.error("💥 uncaughtException:", err);
-});
-
-
-
-
-
 // const feedbackItems = require("./items/feedback_items.json"); // 🔥 경로 주의!
 
 const app = express();
@@ -631,41 +619,6 @@ function enrichItemsWithDomain(itemsArr, monthItems, lessonKey) {
 
 
 
-
-// ---------------------------
-// ✅ option.label → '조이는 ...' 문장으로 변환 (line2 대체용)
-// ---------------------------
-function cleanOptionLabel(label = "") {
-  return String(label)
-    .replace(/^\s*\d+\s*[:.)]\s*/g, "") // "5:" / "5." / "5)" 제거
-    .trim();
-}
-
-function hasFinalConsonant(koreanName = "") {
-  // 한글 음절(가-힣) 기준 종성(받침) 여부 판단
-  const s = String(koreanName).trim();
-  if (!s) return false;
-  const ch = s[s.length - 1];
-  const code = ch.charCodeAt(0);
-  if (code < 0xac00 || code > 0xd7a3) return false; // 한글 음절이 아니면 받침 없음으로 처리
-  const jong = (code - 0xac00) % 28;
-  return jong !== 0;
-}
-
-function makeTopicSubject(name = "아이") {
-  const n = String(name).trim() || "아이";
-  // 은/는
-  const particle = hasFinalConsonant(n) ? "은" : "는";
-  return `${n}${particle}`;
-}
-
-function buildSentence1FromOption(optionLabel, childName = "아이") {
-  const core = cleanOptionLabel(optionLabel);
-  const subject = makeTopicSubject(childName);
-  if (!core) return `${subject} 이번 활동에서 움직임을 시도했어요.`;
-  return `${subject} ${core}`;
-}
-
 function getSelectedOptionLabelFromPack(pack, itemId, value) {
   const v = String(value ?? "").trim();
   if (!v) return ""; // ✅ 빈 값 방어
@@ -747,14 +700,10 @@ async function generateLLMFeedback(data) {
       if (!meta) continue; // pack에 없는 item은 스킵 (예: item6)
 
       const optionLabel = getSelectedOptionLabelFromPack(pack, idNum, it.value);
-      const displayLine2 = buildSentence1FromOption(optionLabel, name);
 
       itemsForLLM.push({
         id: idNum,
         title: meta.line1 || "",
-        // ✅ 화면에 보여줄 line2는 교사 선택(option) 기반으로 대체
-        displayLine2,
-        // ✅ LLM 입력용(활동 설명)은 기존 meta.line2 유지
         line2: meta.line2 || "",
         line3: getSafeLine3(optionLabel),
         useAgeNorm: AGE_NORM_ALLOWED_IDS.has(idNum),
@@ -770,11 +719,11 @@ async function generateLLMFeedback(data) {
       itemsForLLM,
       styleRules
     });
-
+    
     const devMap = llm.devMap;
     const summary = llm.summary;
     summary_by_domain = llm.summary_by_domain || null; // ✅ 여기서 확정
-
+    
 
 
     // 6) 최종 섹션 조립
@@ -788,7 +737,7 @@ async function generateLLMFeedback(data) {
             : "활동 과정에서 자신의 방식으로 참여하며 경험을 쌓아 가는 모습이 관찰되었어요.\n놀이를 이어가며 시도하고 완성해 보는 경험이 의미 있게 이어질 수 있어요.\n차분히 반복하며 익혀 가는 과정이 도움이 될 수 있어요."
         );
 
-      sections.push(buildFinalSection({ title: x.title, line2: x.displayLine2 || x.line2, devParagraph }));
+      sections.push(buildFinalSection({ title: x.title, line2: x.line2, devParagraph }));
     }
 
     const out = sections.join("\n\n");
@@ -800,7 +749,7 @@ async function generateLLMFeedback(data) {
       autoText: normalizeKidNameInText(finalOut, name),
       summary_by_domain,
     };
-
+    
 
   } catch (err) {
     console.error("OpenAI 호출 중 에러:", err);
@@ -832,9 +781,6 @@ app.post("/api/auto-feedback", async (req, res) => {
 
     const { autoText, summary_by_domain } = await generateLLMFeedback(data);
 
-
-    console.log("✅ about to send response");
-    res.on("finish", () => console.log("✅ response finished:", res.statusCode));
     return res.json({
       success: true,
       autoText,
