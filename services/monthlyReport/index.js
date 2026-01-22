@@ -36,7 +36,7 @@ async function generateMonthlyReport({
   });
 
   // 4) LLM 입력 원천
-  const llmInputs = generateInputs({
+  const llmInputs = generateMonthlyInputs({
     child,
     ageMonth,
     year,
