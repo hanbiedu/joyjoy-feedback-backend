@@ -107,11 +107,11 @@ async function callOpenAI(llmPrompt) {
       flow_summary: { type: "string" },
       change_points: { type: "array", items: { type: "string" }, minItems: 2, maxItems: 4 },
       parent_tone_comment: { type: "string" },
-      core_domain: { type: ["string", "null"] },
-      domain_idx_mean_json: { type: "object", additionalProperties: { type: "number" } }
+      core_domain: { type: ["string", "null"] }
     },
-    required: ["one_line", "flow_summary", "change_points", "parent_tone_comment", "core_domain", "domain_idx_mean_json"]
+    required: ["one_line", "flow_summary", "change_points", "parent_tone_comment", "core_domain"]
   };
+  
 
   const inputText = (typeof llmPrompt === "string") ? llmPrompt : JSON.stringify(llmPrompt);
 
