@@ -124,12 +124,13 @@ function buildMeta({ parent_id, ym, child_name, age_month }) {
   }
   
   
-  module.exports = {
-    buildMeta,
-    buildConstraints,
-    buildMonthlyFlowInput,
-    buildTeacherNoteInput,
-    buildDomainGrowthInput, 
-    buildLLMInput
-  };
+  // module.exports = {
+  //   buildMeta,
+  //   buildConstraints,
+  //   buildMonthlyFlowInput,
+  //   buildTeacherNoteInput,
+  //   buildDomainGrowthInput, 
+  //   buildLLMInput
+  // };
+  module.exports = { buildLLMInput };
   
