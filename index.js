@@ -42,6 +42,49 @@ app.use(
   })
 );
 
+
+// ---------------------------
+// 월간 리포트 생성 API
+// ---------------------------
+const { generateMonthlyReport } = require("./services/monthlyReport");
+
+app.post("/api/monthly/generate", async (req, res) => {
+  try {
+    const data = req.body || {};
+
+    const parent_id = String(data.parent_id || "").trim();
+    const month = Number(data.month);
+
+    if (!parent_id) return res.status(400).json({ success: false, message: "MISSING_PARENT_ID" });
+    if (!Number.isFinite(month) || month <= 0) {
+      return res.status(400).json({ success: false, message: "MISSING_OR_INVALID_MONTH" });
+    }
+
+    // ✅ weeklyFeedbacks 자동 수집
+    data.weeklyFeedbacks = await fetchWeeklyFeedbacksFromPhp(parent_id, month);
+
+    // ✅ 월간 리포트는 “실제 수업 데이터”가 있어야 의미가 있으니, 없으면 종료
+    if (!data.weeklyFeedbacks.length) {
+      return res.status(404).json({
+        success: false,
+        message: "NO_WEEKLY_FEEDBACKS_FOR_MONTH",
+      });
+    }
+
+    // ✅ parentProfile/answers 자동 주입(원하면 유지)
+    if (!data.parentProfile && !data.answers) {
+      const answers = await fetchParentPrefFromPhp(parent_id);
+      data.answers = answers || null;
+    }
+
+    const result = await generateMonthlyReport(data);
+    return res.json({ success: true, ...result });
+  } catch (err) {
+    console.error("월간 리포트 생성 에러:", err);
+    return res.status(500).json({ success: false, message: "월간 리포트 생성 중 오류" });
+  }
+});
+
 const ttsRouter = require("./tts");
 app.use("/api", ttsRouter);
 
@@ -874,54 +917,6 @@ app.post("/api/feedback", (req, res) => {
     });
   }
 });
-
-
-// ---------------------------
-// 월간 리포트 생성 API
-// ---------------------------
-const { generateMonthlyReport } = require("./services/monthlyReport");
-
-app.post("/api/monthly/generate", async (req, res) => {
-  try {
-    const data = req.body || {};
-
-    const parent_id = String(data.parent_id || "").trim();
-    const month = Number(data.month);
-
-    if (!parent_id) return res.status(400).json({ success: false, message: "MISSING_PARENT_ID" });
-    if (!Number.isFinite(month) || month <= 0) {
-      return res.status(400).json({ success: false, message: "MISSING_OR_INVALID_MONTH" });
-    }
-
-    // ✅ weeklyFeedbacks 자동 수집
-    data.weeklyFeedbacks = await fetchWeeklyFeedbacksFromPhp(parent_id, month);
-
-    // ✅ 월간 리포트는 “실제 수업 데이터”가 있어야 의미가 있으니, 없으면 종료
-    if (!data.weeklyFeedbacks.length) {
-      return res.status(404).json({
-        success: false,
-        message: "NO_WEEKLY_FEEDBACKS_FOR_MONTH",
-      });
-    }
-
-    // ✅ parentProfile/answers 자동 주입(원하면 유지)
-    if (!data.parentProfile && !data.answers) {
-      const answers = await fetchParentPrefFromPhp(parent_id);
-      data.answers = answers || null;
-    }
-
-    const result = await generateMonthlyReport(data);
-    return res.json({ success: true, ...result });
-  } catch (err) {
-    console.error("월간 리포트 생성 에러:", err);
-    return res.status(500).json({ success: false, message: "월간 리포트 생성 중 오류" });
-  }
-});
-
-
-
-
-
 
 
 
