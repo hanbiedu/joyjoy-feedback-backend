@@ -80,12 +80,56 @@ function buildMeta({ parent_id, ym, child_name, age_month }) {
       }
     };
   }
+
+  function buildLLMInput(monthlyInputs) {
+    // monthlyInputs: generateMonthlyInputs()가 만든 결과
+    // 여기서는 inputs.flow / inputs.teacher_note / inputs.domains 를 "한 번에" 모델에 줄 프롬프트로 합친다.
+  
+    const meta = monthlyInputs?.meta || {};
+    const childName = meta?.child?.name || meta?.child?.name || "";
+    const ym = meta?.ym || "";
+  
+    const flow = monthlyInputs?.inputs?.flow || null;
+    const teacherNote = monthlyInputs?.inputs?.teacher_note || null;
+    const domains = monthlyInputs?.inputs?.domains || {};
+  
+    // ✅ 모델에게 "출력 JSON 스키마"를 강하게 요구
+    return `
+  너는 조이조이 월간 리포트를 생성한다.
+  반드시 아래 스키마에 맞는 JSON만 출력한다. JSON 외 텍스트 금지.
+  
+  [출력 스키마]
+  {
+    "one_line": "string",
+    "flow_summary": "string",
+    "change_points": ["string","string"],
+    "parent_tone_comment": "string",
+    "core_domain": "string|null",
+    "domain_idx_mean_json": { "sensory": number, "cognition": number, "language": number, "motor": number, "social": number }
+  }
+  
+  [메타]
+  - ym: ${ym}
+  - child_name: ${childName}
+  
+  [입력(월간 flow)]
+  ${JSON.stringify(flow, null, 2)}
+  
+  [입력(teacher note)]
+  ${JSON.stringify(teacherNote, null, 2)}
+  
+  [입력(domains)]
+  ${JSON.stringify(domains, null, 2)}
+  `.trim();
+  }
+  
   
   module.exports = {
     buildMeta,
     buildConstraints,
     buildMonthlyFlowInput,
     buildTeacherNoteInput,
-    buildDomainGrowthInput
+    buildDomainGrowthInput, 
+    buildLLMInput
   };
   
