@@ -2,7 +2,7 @@
 
 const generateInputs = require("./generateInputs");
 const buildLLMInput = require("./llmInputBuilder");
-const aggregateWeekly = require("./weeklyAggregate");
+const { aggregateWeekly } = require("./weeklyAggregate");
 const analyzeMonthlyTrend = require("./monthlyTrend"); // ✅ 파일명이 monthlytrend.js 라면 이렇게
 const { generateSignals } = require("./signals");
 
@@ -59,7 +59,7 @@ async function generateMonthlyReport({
     domain_idx_mean_json: weeklyAggregated.domainMeans,
     llmPrompt,
 
-    llmResult: llm.text, // ✅ 추가
+    llmResult: llm.parsed || llm.text, // ✅ 추가
 
     debug: { weeklyAggregated, monthlyTrend, signals },
   };
