@@ -46,7 +46,8 @@ const ttsRouter = require("./tts");
 app.use("/api", ttsRouter);
 
 
-
+const monthlyReportRouter = require("./routes/monthlyReport");
+app.use("/api/monthly", monthlyReportRouter);
 
 
 
@@ -254,6 +255,50 @@ async function fetchParentPrefFromPhp(parent_id) {
     return null;
   }
 }
+
+
+async function fetchWeeklyFeedbacksFromPhp(parent_id, month) {
+  if (!parent_id || !month) return [];
+
+  const fetch = global.fetch || require("node-fetch");
+
+  const url =
+    `https://jo2jo2.co.kr/feedback/getFeedbackList.php` +
+    `?parent_id=${encodeURIComponent(parent_id)}` +
+    `&month=${encodeURIComponent(month)}`;
+
+  try {
+    const r = await fetch(url, { method: "GET" });
+    const txt = await r.text();
+
+    let j;
+    try { j = JSON.parse(txt); } catch { return []; }
+    if (!r.ok || !j?.ok || !Array.isArray(j.data)) return [];
+
+    return j.data
+      .map((d) => {
+        const lesson = String(d.lesson || "").trim();      // "1-5"
+        const m = lesson.match(/^(\d{1,2})-(\d{1,2})$/);
+        if (!m) return null;
+
+        return {
+          lesson,
+          week: Number(m[2]),                 // 5,2,3,4 가능
+          items_json: d.items_json ?? null,   // string 그대로
+          summary_json: d.summary_json ?? null,
+          feedback_text: d.feedback_text ?? null,
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => a.week - b.week);
+
+  } catch (e) {
+    console.error("fetchWeeklyFeedbacksFromPhp error:", e?.message || e);
+    return [];
+  }
+}
+
+
 
 
 
@@ -719,11 +764,11 @@ async function generateLLMFeedback(data) {
       itemsForLLM,
       styleRules
     });
-    
+
     const devMap = llm.devMap;
     const summary = llm.summary;
     summary_by_domain = llm.summary_by_domain || null; // ✅ 여기서 확정
-    
+
 
 
     // 6) 최종 섹션 조립
@@ -749,7 +794,7 @@ async function generateLLMFeedback(data) {
       autoText: normalizeKidNameInText(finalOut, name),
       summary_by_domain,
     };
-    
+
 
   } catch (err) {
     console.error("OpenAI 호출 중 에러:", err);
@@ -829,6 +874,55 @@ app.post("/api/feedback", (req, res) => {
     });
   }
 });
+
+
+// ---------------------------
+// 월간 리포트 생성 API
+// ---------------------------
+const { generateMonthlyReport } = require("./services/monthlyReport");
+
+app.post("/api/monthly/generate", async (req, res) => {
+  try {
+    const data = req.body || {};
+
+    const parent_id = String(data.parent_id || "").trim();
+    const month = Number(data.month);
+
+    if (!parent_id) return res.status(400).json({ success: false, message: "MISSING_PARENT_ID" });
+    if (!Number.isFinite(month) || month <= 0) {
+      return res.status(400).json({ success: false, message: "MISSING_OR_INVALID_MONTH" });
+    }
+
+    // ✅ weeklyFeedbacks 자동 수집
+    data.weeklyFeedbacks = await fetchWeeklyFeedbacksFromPhp(parent_id, month);
+
+    // ✅ 월간 리포트는 “실제 수업 데이터”가 있어야 의미가 있으니, 없으면 종료
+    if (!data.weeklyFeedbacks.length) {
+      return res.status(404).json({
+        success: false,
+        message: "NO_WEEKLY_FEEDBACKS_FOR_MONTH",
+      });
+    }
+
+    // ✅ parentProfile/answers 자동 주입(원하면 유지)
+    if (!data.parentProfile && !data.answers) {
+      const answers = await fetchParentPrefFromPhp(parent_id);
+      data.answers = answers || null;
+    }
+
+    const result = await generateMonthlyReport(data);
+    return res.json({ success: true, ...result });
+  } catch (err) {
+    console.error("월간 리포트 생성 에러:", err);
+    return res.status(500).json({ success: false, message: "월간 리포트 생성 중 오류" });
+  }
+});
+
+
+
+
+
+
 
 
 // ✅ Global error handler (가장 마지막)
