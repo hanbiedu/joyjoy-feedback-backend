@@ -17,3 +17,7 @@ router.post("/generate", async (req, res) => {
 });
 
 module.exports = router;
+
+
+console.log("[HIT] /api/monthly/generate", new Date().toISOString());
+
