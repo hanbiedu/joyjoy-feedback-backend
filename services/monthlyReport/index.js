@@ -1,6 +1,6 @@
 // services/monthlyReport/index.js  (CommonJS)
 
-const { generateInputs } = require("./generateInputs");
+const { generateMonthlyInputs } = require("./generateInputs");
 const { buildLLMInput } = require("./llmInputBuilder");
 const { aggregateWeekly } = require("./weeklyAggregate");
 const { analyzeMonthlyTrend } = require("./monthlyTrend"); // ✅ 파일명이 monthlytrend.js 라면 이렇게
