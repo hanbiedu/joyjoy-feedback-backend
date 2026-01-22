@@ -128,7 +128,14 @@ async function callOpenAI(llmPrompt) {
         { role: "system", content: "You must output ONLY valid JSON that matches the schema." },
         { role: "user", content: inputText }
       ],
-      text: { format: { type: "json_schema", strict: true, schema } }
+      text: { 
+        format: { 
+          type: "json_schema", 
+          name: "monthly_report",
+          strict: true, 
+          schema 
+        } 
+      }
     }),
   });
 
