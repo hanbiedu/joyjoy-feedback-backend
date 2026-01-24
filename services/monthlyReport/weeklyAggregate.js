@@ -145,11 +145,20 @@ function aggregateWeekly(payload) {
   }
 
   // 월간 평균(domainMeans)
-  const domainMeans = {};
+  // 기존: const domainMeans = {};
+  const domainMeans = {
+    sensory: null,
+    cognition: null,
+    language: null,
+    motor: null,
+    social: null,
+  };
+
   for (const d of Object.keys(allByDomain)) {
     const m = mean(allByDomain[d]);
-    if (m != null) domainMeans[d] = m;
+    domainMeans[d] = (m != null ? m : null); // ✅ 키 유지
   }
+
 
   const last = weeklySignals[weeklySignals.length - 1] || null;
 

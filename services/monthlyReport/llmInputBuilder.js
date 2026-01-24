@@ -104,7 +104,7 @@ function buildMeta({ parent_id, ym, child_name, age_month }) {
     "flow_summary": "string",
     "change_points": ["string","string"],
     "parent_tone_comment": "string",
-    "core_domain": "string|null",
+    "core_domain": "sensory|cognition|language|motor|social|null",
     "domain_idx_mean_json": { "sensory": number, "cognition": number, "language": number, "motor": number, "social": number }
   }
   
