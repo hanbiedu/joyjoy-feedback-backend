@@ -68,6 +68,7 @@ async function generateMonthlyReport(payload) {
     ageMonth,
     year: Number.isFinite(year) ? year : null,
     month,
+    weeklyFeedbacks,
     weeklyAggregated,
     monthlyTrend,
     signals,
