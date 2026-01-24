@@ -98,7 +98,10 @@ function mean(arr) {
  * 월간 평균/변화요약을 만든다.
  */
 function generateSignals({ ageMonth, weeklyAggregated, monthlyTrend }) {
-  const weekly = Array.isArray(weeklyAggregated?.weekly) ? weeklyAggregated.weekly : [];
+  const weekly = Array.isArray(weeklyAggregated?.weeklySignals)
+  ? weeklyAggregated.weeklySignals
+  : [];
+
 
   // 주차별 signals 시리즈 뽑기 (불연속 OK)
   const series = {
