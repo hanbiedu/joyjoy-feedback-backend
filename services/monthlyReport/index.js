@@ -72,7 +72,11 @@ async function generateMonthlyReport(payload) {
     monthlyTrend,
     signals,
     parentProfile,
+  
+    // ✅ 추가
+    weeklyFeedbacks,
   });
+  
 
   // 5) 프롬프트 조립
   const llmPrompt = buildLLMInput(llmInputs);
