@@ -32,7 +32,7 @@ function generateMonthlyInputs({
 // generateInputs.js
 const inputs = {
   flow: {
-    weeks: payload.weeklyFeedbacks || [],
+    weeks: Array.isArray(weeklyFeedbacks) ? weeklyFeedbacks : [],
     domainSeries: weeklyAggregated?.domainSeries || null,
     domainTrend: monthlyTrend?.domainTrend || null,
     topUpDomains: monthlyTrend?.topUpDomains || [],
