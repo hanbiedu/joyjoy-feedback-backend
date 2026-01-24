@@ -77,11 +77,33 @@ app.post("/api/monthly/generate", async (req, res) => {
       data.answers = answers || null;
     }
 
-    const result = await generateMonthlyReport(data);
+    // ✅ generateMonthlyReport가 기대하는 키로 매핑해서 호출
+    const ym = String(data.ym || "").trim();          // "2026-01"
+    const year = ym ? Number(ym.split("-")[0]) : undefined;
+    const monthFromYm = ym ? Number(ym.split("-")[1]) : undefined;
+
+    const result = await generateMonthlyReport({
+      child: { name: data.child_name || "" },
+      ageMonth: Number(data.age_month || 0),
+      year: Number.isFinite(year) ? year : undefined,
+      month: Number.isFinite(monthFromYm) ? monthFromYm : Number(data.month || 0),
+
+      weeklyFeedbacks: data.weeklyFeedbacks || [],
+
+      // ✅ 너 서버에서는 부모성향이 answers로 들어옴
+      parentProfile: data.answers || null,
+    });
+
     return res.json({ success: true, ...result });
   } catch (err) {
     console.error("월간 리포트 생성 에러:", err);
-    return res.status(500).json({ success: false, message: "월간 리포트 생성 중 오류" });
+    return res.status(500).json({
+      success: false,
+      message: err?.message || "MONTHLY_GENERATE_FAILED",
+      debug_stack: process.env.NODE_ENV === "production"
+        ? undefined
+        : String(err?.stack || "")
+    });
   }
 });
 
