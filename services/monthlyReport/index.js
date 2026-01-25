@@ -144,7 +144,7 @@ if (llmResult?.parsed?.domain_analysis) {
     core_domain: monthlyTrend?.coreDomain ?? null,
     domain_idx_mean_json: weeklyAggregated?.domainMeans ?? {},
     llmPrompt,
-    llmResult: llm.parsed || llm.text,
+    llmResult: llmResult.parsed || llmResult.text,
     debug: { weeklyAggregated, monthlyTrend, signals },
   };
 }
