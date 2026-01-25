@@ -114,16 +114,29 @@ async function generateMonthlyReport(payload) {
   
 
 
-  // 5) 프롬프트 조립
-  const llmPrompt = buildLLMInput(llmInputs);
+ // 5) 프롬프트 조립
+const llmPrompt = buildLLMInput(llmInputs);
 
-  console.log("[POST] before:", llm?.parsed?.parent_tone_comment);
+// 6) LLM 호출 (예시: services/llm.js에 맞게 바꿔야 함)
+const llmResult = await callLLMForMonthlyReport(llmPrompt); 
+// llmResult는 { parsed: { parent_tone_comment, domain_analysis, ... }, ... } 형태라고 가정
 
-  if (llm?.parsed?.parent_tone_comment) {
-    llm.parsed.parent_tone_comment = forceTwoSentences(llm.parsed.parent_tone_comment);
-  }
+// 7) 후처리: 두 문장 강제
+if (llmResult?.parsed?.parent_tone_comment) {
+  llmResult.parsed.parent_tone_comment =
+    forceTwoSentences(llmResult.parsed.parent_tone_comment);
+}
+
+if (llmResult?.parsed?.domain_analysis) {
+  llmResult.parsed.domain_analysis = llmResult.parsed.domain_analysis.map(d => ({
+    ...d,
+    summary: forceTwoSentences(d.summary),
+  }));
+}
+
   
-  console.log("[POST] after :", llm?.parsed?.parent_tone_comment);
+  
+  // console.log("[POST] after :", llm?.parsed?.parent_tone_comment);
   
   
 
