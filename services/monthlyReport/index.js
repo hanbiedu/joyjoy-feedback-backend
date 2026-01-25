@@ -118,7 +118,10 @@ async function generateMonthlyReport(payload) {
   const llmPrompt = buildLLMInput(llmInputs);
 
   const llm = await callOpenAI(llmPrompt);
-  console.log("[LLM] prompt length =", llmPrompt.length);
+  if (llm?.parsed?.parent_tone_comment) {
+    llm.parsed.parent_tone_comment = forceTwoSentences(llm.parsed.parent_tone_comment);
+  }
+  
 
   return {
     ok: true,
@@ -231,5 +234,48 @@ async function callOpenAI(llmPrompt) {
     clearTimeout(t);
   }
 }
+
+
+function splitSentencesKo(text) {
+  if (!text) return [];
+  // 아주 단순 문장 분리: . ! ? 기준 (끝에 공백/줄바꿈 허용)
+  return text
+    .split(/(?<=[.!?])\s+/)
+    .map(s => s.trim())
+    .filter(Boolean);
+}
+
+function joinTwoIntoOne(a, b) {
+  if (!a) return b || "";
+  if (!b) return a || "";
+  // a가 "…습니다." 형태면 "…고," 로 바꿔 자연스럽게 연결
+  const a2 = a.replace(/습니다\.$/, "고,").replace(/했어요\.$/, "했고,");
+  // b는 그대로 이어붙임
+  return `${a2} ${b}`;
+}
+
+function forceTwoSentences(text) {
+  const s = splitSentencesKo(text);
+
+  if (s.length <= 2) return text; // 이미 2문장 이하
+
+  // 4문장 이상이면: 앞2개 합치고, 뒤는 나머지 합쳐 2문장으로
+  const first = joinTwoIntoOne(s[0], s[1]);
+
+  // 뒤쪽은 2문장으로 압축: (3,4,5...)를 하나로 만들고 마지막은 계획문이 보이게 유지
+  let tail = s.slice(2).join(" ");
+  // tail이 너무 길면 3+4만 묶고 나머지는 뒤에 붙이기(상황 따라)
+  // 여기선 단순히 전체를 하나로 둠
+  // 필요하면 더 정교화 가능
+
+  // tail도 문장 2개 이상이면 첫 문장만 유지하고 나머지는 붙여 1문장으로 압축
+  const t = splitSentencesKo(tail);
+  if (t.length >= 2) {
+    const second = joinTwoIntoOne(t[0], t.slice(1).join(" "));
+    return `${first} ${second}`.trim();
+  }
+  return `${first} ${tail}`.trim();
+}
+
 
 
