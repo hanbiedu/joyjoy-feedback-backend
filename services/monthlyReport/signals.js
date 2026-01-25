@@ -136,7 +136,13 @@ function generateSignals({ weeklyAggregated, monthlyTrend }) {
 }
 
 module.exports = {
+  // ✅ weeklyAggregate.js가 쓰는 것들
+  mixedSignal,
+  persistenceSignal,
+  selfInitiationSignal,
+
+  // ✅ 월간 문장용 wrapper
   generateSignals,
-  // mixedSignal/persistenceSignal/selfInitiationSignal 등 기존 export는 그대로 두고 싶으면 유지
 };
+
 
