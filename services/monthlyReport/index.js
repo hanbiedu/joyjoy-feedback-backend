@@ -84,6 +84,7 @@ async function generateMonthlyReport(payload) {
   const llmPrompt = buildLLMInput(llmInputs);
 
   const llm = await callOpenAI(llmPrompt);
+  console.log("[LLM] prompt length =", llmPrompt.length);
 
   return {
     ok: true,
@@ -108,7 +109,7 @@ async function callOpenAI(llmPrompt) {
   const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
 
   const controller = new AbortController();
-  const t = setTimeout(() => controller.abort(), 60000); // ✅ 60초
+  const t = setTimeout(() => controller.abort(), 120000); // ✅ 60초
 
   try {
     const r = await fetch("https://api.openai.com/v1/responses", {
@@ -122,7 +123,7 @@ async function callOpenAI(llmPrompt) {
         model,
         store: false,
         temperature: 0.2,
-        max_output_tokens: 600,
+        max_output_tokens: 1200,
         input: [
           { role: "system", content: "You must output ONLY valid JSON that matches the schema." },
           { role: "user", content: String(llmPrompt) }
