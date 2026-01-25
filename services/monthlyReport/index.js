@@ -63,6 +63,14 @@ async function generateMonthlyReport(payload) {
   });
 
   // 4) LLM 입력 원천
+  const slimDomainsInput = {
+    core_domain: monthlyTrend?.coreDomain ?? null,
+    domain_means: weeklyAggregated?.domainMeans ?? {},
+    domain_series: weeklyAggregated?.domainSeries ?? {},
+    signals: signals ?? {},
+    domain_trend: monthlyTrend ?? {}
+  };
+  
   const llmInputs = generateMonthlyInputs({
     parent_id: payload?.parent_id ?? null,
     ym: payload?.ym ?? null,
@@ -72,12 +80,13 @@ async function generateMonthlyReport(payload) {
     year: Number.isFinite(year) ? year : null,
     month,
   
-    weeklyFeedbacks,          // ✅ 추가 (프롬프트 weeks 구성용)
-    weeklyAggregated,
-    monthlyTrend,
-    signals,
+    // ❌ weeklyFeedbacks 제거
+    // ❌ weeklyAggregated 제거
+  
+    domains_input: slimDomainsInput, // ✅ 새로 추가
     parentProfile,
   });
+  
 
 
   // 5) 프롬프트 조립
@@ -123,7 +132,7 @@ async function callOpenAI(llmPrompt) {
         model,
         store: false,
         temperature: 0.2,
-        max_output_tokens: 1200,
+        max_output_tokens: 900,
         input: [
           { role: "system", content: "You must output ONLY valid JSON that matches the schema." },
           { role: "user", content: String(llmPrompt) }
