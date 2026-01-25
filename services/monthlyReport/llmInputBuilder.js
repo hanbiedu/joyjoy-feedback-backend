@@ -90,7 +90,24 @@ function buildLLMInput(monthlyInputs) {
 
   const flow = monthlyInputs?.inputs?.flow || null;
   const teacherNote = monthlyInputs?.inputs?.teacher_note || null;
-  const domains = monthlyInputs?.inputs?.domains || {};
+  const domainsRaw =
+    monthlyInputs?.domains_input ||
+    monthlyInputs?.inputs?.domains ||
+    {};
+
+  // ✅ snake_case / camelCase 모두 커버
+  const coreCandidate =
+    domainsRaw?.core_domain ??
+    domainsRaw?.coreDomain ??
+    domainsRaw?.core_domain_candidate ??
+    null;
+
+  // ✅ LLM이 반드시 따라야 하는 후보 키를 강제로 포함
+  const domains = {
+    ...domainsRaw,
+    core_domain_candidate: coreCandidate,
+  };
+
 
   return `
   너는 ‘아이 발달 평가 보고서’를 작성하지 않는다.
@@ -164,6 +181,7 @@ function buildLLMInput(monthlyInputs) {
   - 첫 번째는 반드시 core_domain
   - 두 번째는 보조 도메인 1개(topUp)
   - core_domain이 null이면 domain_means에서 평균이 가장 높은 도메인을 core_domain으로 선택한다.
+  - core_domain은 반드시 core_domain_candidate와 동일한 값으로 출력한다.
 - domain_analysis의 domain 값은 반드시 sensory/cognition/motor/social 중 하나만 사용한다.
   - α 도메인은 core_domain과 보조 도메인 모두에서
   명확한 변화 신호가 동시에 나타날 때만 추가한다.
