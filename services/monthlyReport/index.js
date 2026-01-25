@@ -132,7 +132,7 @@ async function callOpenAI(llmPrompt) {
         model,
         store: false,
         temperature: 0.2,
-        max_output_tokens: 900,
+        max_output_tokens: 700,
         input: [
           { role: "system", content: "You must output ONLY valid JSON that matches the schema." },
           { role: "user", content: String(llmPrompt) }
