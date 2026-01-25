@@ -117,10 +117,14 @@ async function generateMonthlyReport(payload) {
   // 5) 프롬프트 조립
   const llmPrompt = buildLLMInput(llmInputs);
 
-  const llm = await callOpenAI(llmPrompt);
+  console.log("[POST] before:", llm?.parsed?.parent_tone_comment);
+
   if (llm?.parsed?.parent_tone_comment) {
     llm.parsed.parent_tone_comment = forceTwoSentences(llm.parsed.parent_tone_comment);
   }
+  
+  console.log("[POST] after :", llm?.parsed?.parent_tone_comment);
+  
   
 
   return {
