@@ -102,8 +102,15 @@ function buildLLMInput(monthlyInputs) {
   "flow_summary": "string",
   "change_points": ["string","string"],
   "parent_tone_comment": "string",
-  "core_domain": "string|null"
+  "core_domain": "string|null",
+  "domain_analysis": [
+    {
+      "domain": "string",
+      "summary": "string"
+    }
+  ]
 }
+
 
 [작성 규칙]
 - 언어(language) 영역 언급/추론/출력 금지
@@ -111,6 +118,20 @@ function buildLLMInput(monthlyInputs) {
 - 진단 금지(지연/문제/장애 등)
 - flow_summary: 2~3문장, 객관 문장 위주
 - parent_tone_comment: 4문장(해석+연결), 따뜻하지만 과장 없이
+
+
+- domain_analysis 규칙:
+  * 반드시 2개 도메인을 출력한다.
+  * 첫 번째는 core_domain.
+  * 두 번째는 보조 도메인(topUp) 1개.
+  * α 도메인은 조건이 명확할 때만 1개 추가(최대 3개).
+  * 각 summary는 2문장 이내, 관찰/추세/신호에 근거해 작성.
+
+[도메인 선택 힌트]
+- core_domain: ${monthlyInputs?.monthlyTrend?.coreDomain || null}
+- domain_means: ${JSON.stringify(monthlyInputs?.weeklyAggregated?.domainMeans || {}, null, 2)}
+- domain_trend: ${JSON.stringify(monthlyInputs?.monthlyTrend || {}, null, 2)}
+
 
 [메타]
 - ym: ${ym}

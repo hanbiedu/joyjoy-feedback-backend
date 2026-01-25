@@ -140,10 +140,34 @@ async function callOpenAI(llmPrompt) {
                 flow_summary: { type: "string" },
                 change_points: { type: "array", items: { type: "string" }, minItems: 2, maxItems: 2 },
                 parent_tone_comment: { type: "string" },
-                core_domain: { type: ["string", "null"] }
+                core_domain: { type: ["string", "null"] },
+            
+                // ⬇️ 추가
+                domain_analysis: {
+                  type: "array",
+                  minItems: 2,
+                  maxItems: 3,          // 2 + α (최대 1)
+                  items: {
+                    type: "object",
+                    additionalProperties: false,
+                    properties: {
+                      domain: { type: "string" },
+                      summary: { type: "string" }
+                    },
+                    required: ["domain", "summary"]
+                  }
+                }
               },
-              required: ["one_line","flow_summary","change_points","parent_tone_comment","core_domain"]
+              required: [
+                "one_line",
+                "flow_summary",
+                "change_points",
+                "parent_tone_comment",
+                "core_domain",
+                "domain_analysis"   // ⬅️ 필수로
+              ]
             }
+            
           }
         }
       }),
