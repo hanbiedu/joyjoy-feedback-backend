@@ -117,14 +117,12 @@ async function generateMonthlyReport(payload) {
  // 5) 프롬프트 조립
 const llmPrompt = buildLLMInput(llmInputs);
 
-// 6) LLM 호출 (예시: services/llm.js에 맞게 바꿔야 함)
-const llmResult = await callLLMForMonthlyReport(llmPrompt); 
-// llmResult는 { parsed: { parent_tone_comment, domain_analysis, ... }, ... } 형태라고 가정
+// ✅ 6) LLM 호출 결과를 변수로 받아야 함 (이 줄이 없어서 llm is not defined가 난 것)
+const llmResult = await llm.generateJSON(llmPrompt); // ← 여기서 llm은 services/llm.js에서 가져온 모듈이어야 함
 
-// 7) 후처리: 두 문장 강제
+// ✅ 7) 후처리는 결과 변수(llmResult)에 적용
 if (llmResult?.parsed?.parent_tone_comment) {
-  llmResult.parsed.parent_tone_comment =
-    forceTwoSentences(llmResult.parsed.parent_tone_comment);
+  llmResult.parsed.parent_tone_comment = forceTwoSentences(llmResult.parsed.parent_tone_comment);
 }
 
 if (llmResult?.parsed?.domain_analysis) {
@@ -133,6 +131,7 @@ if (llmResult?.parsed?.domain_analysis) {
     summary: forceTwoSentences(d.summary),
   }));
 }
+
 
   
   
