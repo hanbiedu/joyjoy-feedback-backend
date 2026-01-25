@@ -63,29 +63,54 @@ async function generateMonthlyReport(payload) {
   });
 
   // 4) LLM 입력 원천
-  const slimDomainsInput = {
-    core_domain: monthlyTrend?.coreDomain ?? null,
-    domain_means: weeklyAggregated?.domainMeans ?? {},
-    domain_series: weeklyAggregated?.domainSeries ?? {},
-    signals: signals ?? {},
-    domain_trend: monthlyTrend ?? {}
-  };
+    // 4) LLM 입력 원천(✅ 슬림화)
+    const slimDomainsInput = {
+      core_domain: monthlyTrend?.coreDomain ?? null,
+      domain_means: weeklyAggregated?.domainMeans ?? {},
+      domain_series: weeklyAggregated?.domainSeries ?? {},
+      domain_trend: monthlyTrend?.domainTrend ?? {},
+      topUpDomains: monthlyTrend?.topUpDomains ?? [],
+      topDownDomains: monthlyTrend?.topDownDomains ?? [],
+      signals: signals ?? {},
+    };
   
-  const llmInputs = generateMonthlyInputs({
-    parent_id: payload?.parent_id ?? null,
-    ym: payload?.ym ?? null,
+    // ✅ generateMonthlyInputs 우회: buildLLMInput이 기대하는 형태로 직접 구성
+    const llmInputs = {
+      meta: {
+        ym: payload?.ym ?? null,
+        child: { name: child?.name ?? "", age_month: ageMonth },
+        locale: "ko-KR",
+        timezone: "Asia/Seoul",
+      },
+      inputs: {
+        flow: {
+          // weeks가 꼭 필요하면 여기에서 최소 정보만 넣어도 됨
+          weeks: weeklyAggregated?.weeklySignals?.map(w => ({
+            week: w.week,
+            signals: w.signals,
+            // byDomainValues는 크면 느려지니 필요시만
+          })) ?? [],
+          highlight: signals?.highlight ?? null,
+          caution: signals?.caution ?? null,
+        },
+        teacher_note: {
+          avg_signal_levels: signals?.avg_signal_levels ?? null,
+          highlight: signals?.highlight ?? null,
+          caution: signals?.caution ?? null,
+          coreDomain: monthlyTrend?.coreDomain ?? null,
+          hard_rules: [
+            "언어(language) 영역 언급 금지",
+            "다른 아이와 비교 금지",
+            "부족/지연/문제 같은 부정적 진단 표현 금지",
+          ],
+          tone_hint_from_parent_profile: null,
+        },
+      },
+      // ✅ llmInputBuilder에서 domains_input을 먼저 읽게 되어있음
+      domains_input: slimDomainsInput,
+      parentProfile: parentProfile ?? null,
+    };
   
-    child,
-    ageMonth,
-    year: Number.isFinite(year) ? year : null,
-    month,
-  
-    // ❌ weeklyFeedbacks 제거
-    // ❌ weeklyAggregated 제거
-  
-    domains_input: slimDomainsInput, // ✅ 새로 추가
-    parentProfile,
-  });
   
 
 
@@ -150,7 +175,8 @@ async function callOpenAI(llmPrompt) {
                 flow_summary: { type: "string" },
                 change_points: { type: "array", items: { type: "string" }, minItems: 2, maxItems: 2 },
                 parent_tone_comment: { type: "string" },
-                core_domain: { type: ["string", "null"] },
+                core_domain: { type: "string", enum: ["sensory","cognition","motor","social"] },
+
             
                 // ⬇️ 추가
                 domain_analysis: {
@@ -161,7 +187,8 @@ async function callOpenAI(llmPrompt) {
                     type: "object",
                     additionalProperties: false,
                     properties: {
-                      domain: { type: "string" },
+                      domain: { type: "string", enum: ["sensory", "cognition", "motor", "social"] },
+
                       summary: { type: "string" }
                     },
                     required: ["domain", "summary"]

@@ -163,6 +163,8 @@ function buildLLMInput(monthlyInputs) {
   - 기본 2개 도메인을 작성한다.
   - 첫 번째는 반드시 core_domain
   - 두 번째는 보조 도메인 1개(topUp)
+  - core_domain이 null이면 domain_means에서 평균이 가장 높은 도메인을 core_domain으로 선택한다.
+- domain_analysis의 domain 값은 반드시 sensory/cognition/motor/social 중 하나만 사용한다.
   - α 도메인은 core_domain과 보조 도메인 모두에서
   명확한 변화 신호가 동시에 나타날 때만 추가한다.
   그렇지 않으면 절대 추가하지 않는다.
