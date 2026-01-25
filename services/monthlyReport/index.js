@@ -118,7 +118,7 @@ async function generateMonthlyReport(payload) {
 const llmPrompt = buildLLMInput(llmInputs);
 
 // ✅ 6) LLM 호출 결과를 변수로 받아야 함 (이 줄이 없어서 llm is not defined가 난 것)
-const llmResult = await llm.generateJSON(llmPrompt); // ← 여기서 llm은 services/llm.js에서 가져온 모듈이어야 함
+const llmResult = await callOpenAI(llmPrompt); // ← 여기서 llm은 services/llm.js에서 가져온 모듈이어야 함
 
 // ✅ 7) 후처리는 결과 변수(llmResult)에 적용
 if (llmResult?.parsed?.parent_tone_comment) {
