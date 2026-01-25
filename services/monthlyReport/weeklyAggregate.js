@@ -1,9 +1,4 @@
 // services/monthlyReport/weeklyAggregate.js
-// ✅ 월간 index.js가 호출하는 형태를 그대로 받는다:
-//    aggregateWeekly({ ageMonth, weeklyFeedbacks, itemMetaById? })
-//
-// ✅ weeklyFeedbacks[].items_json 이 LONGTEXT(string)여도 JSON.parse 해서 처리
-// ✅ item에 domain이 있으면 우선 사용, 없으면 itemMetaById로 보완(있을 때만)
 
 const {
   mixedSignal,
@@ -17,15 +12,11 @@ function clamp(n, min, max) {
 
 function safeJsonParse(v) {
   if (v == null) return null;
-  if (typeof v === "object") return v; // already parsed
+  if (typeof v === "object") return v;
   if (typeof v !== "string") return null;
   const s = v.trim();
   if (!s) return null;
-  try {
-    return JSON.parse(s);
-  } catch {
-    return null;
-  }
+  try { return JSON.parse(s); } catch { return null; }
 }
 
 function mean(arr) {
@@ -57,27 +48,12 @@ function aggregateWeekly(payload) {
 
   const itemMetaById = payload?.itemMetaById || null;
 
-  // 월간 누적(평균용)
-  const allByDomain = {
-    sensory: [],
-    cognition: [],
-    language: [],
-    motor: [],
-    social: [],
-  };
-
-  // 주차별 시계열(트렌드용)
-  const domainSeries = {
-    sensory: [],
-    cognition: [],
-    language: [],
-    motor: [],
-    social: [],
-  };
+  // ✅ 언어 완전 삭제: 4도메인만
+  const allByDomain = { sensory: [], cognition: [], motor: [], social: [] };
+  const domainSeries = { sensory: [], cognition: [], motor: [], social: [] };
 
   const weeklySignals = [];
 
-  // 주차 정렬(week 없으면 lessonKey에서 -n 추출)
   const sorted = [...weeklyFeedbacks].sort((a, b) => {
     const wa = Number(a?.week) || Number(String(a?.lesson || "").split("-")[1]) || 0;
     const wb = Number(b?.week) || Number(String(b?.lesson || "").split("-")[1]) || 0;
@@ -90,20 +66,13 @@ function aggregateWeekly(payload) {
       Number(String(wf?.lesson || "").split("-")[1]) ||
       null;
 
-    // ✅ LONGTEXT(string) -> parse -> array
     const parsed = safeJsonParse(wf?.items_json);
     const items = normalizeItems(parsed);
 
     const valuesAll = items.map((x) => x.value);
 
-    // 주차 도메인별
-    const byDomain = {
-      sensory: [],
-      cognition: [],
-      language: [],
-      motor: [],
-      social: [],
-    };
+    // ✅ 언어 완전 삭제
+    const byDomain = { sensory: [], cognition: [], motor: [], social: [] };
 
     for (const it of items) {
       const metaDomain = itemMetaById?.[it.id]?.domain
@@ -117,7 +86,6 @@ function aggregateWeekly(payload) {
       allByDomain[domain].push(it.value);
     }
 
-    // 주차별 domainSeries push (없으면 null)
     for (const d of Object.keys(domainSeries)) {
       domainSeries[d].push(mean(byDomain[d]));
     }
@@ -128,9 +96,6 @@ function aggregateWeekly(payload) {
     const teacherPrompt = engagement == null ? null : clamp(6 - engagement, 1, 5);
     const selfInitiation = selfInitiationSignal(valuesAll);
 
-    // 언어는 language 도메인만
-    const verbal = byDomain.language.length ? mixedSignal(byDomain.language) : null;
-
     weeklySignals.push({
       week,
       signals: {
@@ -138,27 +103,16 @@ function aggregateWeekly(payload) {
         persistence_level: persistence,
         teacher_prompt_level: teacherPrompt,
         self_initiation_level: selfInitiation,
-        verbal_response_level: verbal,
       },
       byDomainValues: byDomain,
     });
   }
 
-  // 월간 평균(domainMeans)
-  // 기존: const domainMeans = {};
-  const domainMeans = {
-    sensory: null,
-    cognition: null,
-    language: null,
-    motor: null,
-    social: null,
-  };
-
+  const domainMeans = {};
   for (const d of Object.keys(allByDomain)) {
     const m = mean(allByDomain[d]);
-    domainMeans[d] = (m != null ? m : null); // ✅ 키 유지
+    if (m != null) domainMeans[d] = m;
   }
-
 
   const last = weeklySignals[weeklySignals.length - 1] || null;
 
@@ -166,13 +120,11 @@ function aggregateWeekly(payload) {
     domainSeries,
     domainMeans,
     weeklySignals,
-    // 호환용 (기존 코드가 signals만 볼 수도 있어서 유지)
     signals: last?.signals || {
       engagement_level: null,
       persistence_level: null,
       teacher_prompt_level: null,
       self_initiation_level: null,
-      verbal_response_level: null,
     },
   };
 }

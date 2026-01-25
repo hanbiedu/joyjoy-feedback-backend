@@ -86,33 +86,28 @@ function selfInitiationSignal(rawValues) {
   return clamp(Math.round(base + bonus), 1, 5);
 }
 
+// services/monthlyReport/signals.js
+
 function mean(arr) {
   const xs = (arr || []).filter(v => Number.isFinite(v));
   if (!xs.length) return null;
   return xs.reduce((a, b) => a + b, 0) / xs.length;
 }
 
-/**
- * ✅ 월간 시그널 생성 wrapper
- * weeklyAggregate.js가 만든 weeklyAggregated.weekly[]를 기반으로
- * 월간 평균/변화요약을 만든다.
- */
-function generateSignals({ ageMonth, weeklyAggregated, monthlyTrend }) {
-  const weekly = Array.isArray(weeklyAggregated?.weeklySignals)
-  ? weeklyAggregated.weeklySignals
-  : [];
+function generateSignals({ weeklyAggregated, monthlyTrend }) {
+  // ✅ 여기 핵심: weeklyAggregated.weeklySignals 사용
+  const weeklySignals = Array.isArray(weeklyAggregated?.weeklySignals)
+    ? weeklyAggregated.weeklySignals
+    : [];
 
-
-  // 주차별 signals 시리즈 뽑기 (불연속 OK)
   const series = {
     engagement_level: [],
     persistence_level: [],
     teacher_prompt_level: [],
     self_initiation_level: [],
-    verbal_response_level: [],
   };
 
-  for (const w of weekly) {
+  for (const w of weeklySignals) {
     const s = w.signals || {};
     for (const k of Object.keys(series)) {
       series[k].push(s[k] ?? null);
@@ -121,12 +116,10 @@ function generateSignals({ ageMonth, weeklyAggregated, monthlyTrend }) {
 
   const avg = {};
   for (const [k, arr] of Object.entries(series)) {
-    avg[k] = mean(arr.map(v => (v == null ? NaN : Number(v)))) ?? null;
-    if (avg[k] != null) avg[k] = Number(avg[k].toFixed(2));
+    const m = mean(arr.map(v => (v == null ? NaN : Number(v))));
+    avg[k] = m == null ? null : Number(m.toFixed(2));
   }
 
-  // highlight/caution: domainTrend + avg를 이용해 간단히 만들기
-  // (LLM에 들어갈 “신호 문장”은 generateInputs/llmInputBuilder에서 더 풍부하게 써도 됨)
   const coreDomain = monthlyTrend?.coreDomain || null;
   const up = Array.isArray(monthlyTrend?.topUpDomains) ? monthlyTrend.topUpDomains : [];
   const down = Array.isArray(monthlyTrend?.topDownDomains) ? monthlyTrend.topDownDomains : [];
@@ -139,28 +132,11 @@ function generateSignals({ ageMonth, weeklyAggregated, monthlyTrend }) {
     ? `이번 달은 ${down[0]} 영역에서 변동이 관찰됩니다.`
     : null;
 
-  return {
-    // 숫자 요약
-    avg_signal_levels: avg,
-
-    // 텍스트 요약(LLM 없이도 최소 표시 가능)
-    highlight,
-    caution,
-  };
+  return { avg_signal_levels: avg, highlight, caution };
 }
 
 module.exports = {
   generateSignals,
-  mixedSignal,
-  persistenceSignal,
-  selfInitiationSignal,
-  _internal: {
-    clamp,
-    toNums,
-    median,
-    baseFromMedian,
-    bonusFromTopRatio,
-    bonusSelfInitiation,
-    mean,
-  },
+  // mixedSignal/persistenceSignal/selfInitiationSignal 등 기존 export는 그대로 두고 싶으면 유지
 };
+

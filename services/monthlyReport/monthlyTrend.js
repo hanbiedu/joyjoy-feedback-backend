@@ -9,7 +9,7 @@ const SIGNAL_KEYS = [
   "persistence_level",
   "teacher_prompt_level",
   "self_initiation_level",
-  "verbal_response_level",
+  
 ];
 
 function isNum(x) {

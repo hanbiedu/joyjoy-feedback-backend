@@ -81,81 +81,51 @@ function buildDomainGrowthInput(meta, domain, domainAggregate) {
   };
 }
 
-function buildLLMInput(monthlyInputs) {
-  // monthlyInputs: generateMonthlyInputs()가 만든 결과
-  // 여기서는 inputs.flow / inputs.teacher_note / inputs.domains 를 "한 번에" 모델에 줄 프롬프트로 합친다.
+// llmInputBuilder.js
 
+function buildLLMInput(monthlyInputs) {
   const meta = monthlyInputs?.meta || {};
-  const childName = meta?.child?.name || meta?.child?.name || "";
+  const childName = meta?.child?.name || "";
   const ym = meta?.ym || "";
 
   const flow = monthlyInputs?.inputs?.flow || null;
   const teacherNote = monthlyInputs?.inputs?.teacher_note || null;
   const domains = monthlyInputs?.inputs?.domains || {};
 
-  // ✅ 모델에게 "출력 JSON 스키마"를 강하게 요구
   return `
-  너는 조이조이 월간 리포트를 생성한다.
-  반드시 아래 스키마에 맞는 JSON만 출력한다. JSON 외 텍스트 금지.
-  
-  [출력 스키마]
-  {
-    "one_line": "string",
-    "flow_summary": "string",
-    "change_points": ["string","string"],
-    "parent_tone_comment": "string",
-    "core_domain": "sensory|null",
-    "domain_idx_mean_json": { "sensory": number, "cognition": number, "language": number, "motor": number, "social": number }
-  }
+너는 조이조이 월간 리포트를 생성한다.
+반드시 아래 스키마에 맞는 JSON만 출력한다. JSON 외 텍스트 금지.
 
-  [출력 예시]
+[출력 스키마]
 {
-  "one_line": "이번 달은 인지 영역의 성장 흐름이 두드러졌습니다.",
-  "flow_summary": "아이는 다양한 탐색 활동을 통해 관찰력과 문제 해결 능력이 점진적으로 향상되었습니다.",
-  "change_points": [
-    "cognition 영역의 점진적 상승",
-    "social 영역의 안정적 유지"
-  ],
-  "parent_tone_comment": "아이의 흥미와 참여도가 자연스럽게 확장되고 있어 긍정적인 한 달이었습니다.",
-  "core_domain": "cognition",
-  "domain_idx_mean_json": {
-    "sensory": 7,
-    "cognition": 6.25,
-    "language": null,
-    "motor": 6.33,
-    "social": 7
-  }
+  "one_line": "string",
+  "flow_summary": "string",
+  "change_points": ["string","string"],
+  "parent_tone_comment": "string",
+  "core_domain": "string|null"
 }
 
-[core_domain 규칙]
-- core_domain 값은 아래 6개 중 정확히 1개만 허용한다:
-  sensory, cognition, language, motor, social, null
-- 위 목록을 그대로 붙여 쓰거나(예: "sensory|cognition|...") 반복 출력하는 것은 금지.
-- 만약 확신이 없으면 null을 사용한다.
+[작성 규칙]
+- 언어(language) 영역 언급/추론/출력 금지
+- 비교 금지(다른 아이/평균 대비 등)
+- 진단 금지(지연/문제/장애 등)
+- flow_summary: 2~3문장, 객관 문장 위주
+- parent_tone_comment: 4문장(해석+연결), 따뜻하지만 과장 없이
 
-  
-  [메타]
-  - ym: ${ym}
-  - child_name: ${childName}
-  
-  [입력(월간 flow)]
-  ${JSON.stringify(flow, null, 2)}
-  
-  [입력(teacher note)]
-  ${JSON.stringify(teacherNote, null, 2)}
-  
-  [입력(domains)]
-  ${JSON.stringify(domains, null, 2)}
+[메타]
+- ym: ${ym}
+- child_name: ${childName}
+
+[입력(월간 flow)]
+${JSON.stringify(flow, null, 2)}
+
+[입력(teacher note)]
+${JSON.stringify(teacherNote, null, 2)}
+
+[입력(domains)]
+${JSON.stringify(domains, null, 2)}
   `.trim();
 }
 
-
-// module.exports = {
-//   buildMeta,
-//   buildConstraints,
-//   buildMonthlyFlowInput,
-//   buildTeacherNoteInput,
-//   buildDomainGrowthInput, 
-//   buildLLMInput
-// };
 module.exports = { buildLLMInput };
+
