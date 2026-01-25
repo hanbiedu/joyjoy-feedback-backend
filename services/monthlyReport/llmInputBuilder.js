@@ -104,7 +104,7 @@ function buildLLMInput(monthlyInputs) {
     "flow_summary": "string",
     "change_points": ["string","string"],
     "parent_tone_comment": "string",
-    "core_domain": "sensory|cognition|language|motor|social|null",
+    "core_domain": "sensory|null",
     "domain_idx_mean_json": { "sensory": number, "cognition": number, "language": number, "motor": number, "social": number }
   }
 
@@ -126,6 +126,13 @@ function buildLLMInput(monthlyInputs) {
     "social": 7
   }
 }
+
+[core_domain 규칙]
+- core_domain 값은 아래 6개 중 정확히 1개만 허용한다:
+  sensory, cognition, language, motor, social, null
+- 위 목록을 그대로 붙여 쓰거나(예: "sensory|cognition|...") 반복 출력하는 것은 금지.
+- 만약 확신이 없으면 null을 사용한다.
+
   
   [메타]
   - ym: ${ym}
