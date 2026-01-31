@@ -782,10 +782,16 @@ async function generateLLMFeedback(data) {
     })();
 
   // ✅ 3) pack 없으면 여기서 종료 (다른 수업 템플릿 절대 사용 금지)
-  if (!pack) return { autoText: fallbackText, summary_by_domain: null };
+  if (!pack){
+    console("llm error : pack 없으면 여기서 종료");
+    return { autoText: fallbackText, summary_by_domain: null };
+  } 
 
   // ✅ items 없으면 fallback만
-  if (items.length === 0) return { autoText: fallbackText, summary_by_domain: null };
+  if (items.length === 0){
+    console("llm error : items 없으면 여기서 종료");
+    return { autoText: fallbackText, summary_by_domain: null };
+  } 
 
   // ✅ API 키 없으면 fallback만
   if (!process.env.OPENAI_API_KEY) {
@@ -820,7 +826,10 @@ async function generateLLMFeedback(data) {
       });
     }
 
-    if (itemsForLLM.length === 0) return { autoText: fallbackText, summary_by_domain: null };
+    if (itemsForLLM.length === 0){
+      console("llm error : itemsForLLM 없으면 여기서 종료");
+       return { autoText: fallbackText, summary_by_domain: null };
+    }
 
     // 5) LLM 1회 호출
     const llm = await generateDevParagraphsBatch({
