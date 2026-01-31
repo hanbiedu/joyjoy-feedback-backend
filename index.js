@@ -479,8 +479,9 @@ function buildFallbackText(pack, data) {
       // label이 "1: ..." 형태면 번호 제거하고 문장만 쓰고 싶을 때:
       const cleanedLabel = optionLabel.replace(/^\s*\d+\s*:\s*/, "").trim();
 
-      const baseText = `${meta.line2} ${cleanedLabel}`.trim();
+      const baseText = cleanedLabel.trim();
       return baseText ? `● ${baseText}` : "";
+
     })
     .filter(Boolean);
 
@@ -652,12 +653,12 @@ function normalize3Lines(dev) {
 }
 
 // item 1개 섹션(제목 + line2 + LLM문단) 만들기
-function buildFinalSection({ title, line2, devParagraph }) {
+function buildFinalSection({ title, devParagraph }) {
   return `${title}
-${line2}
 
 ${devParagraph}`.trim();
 }
+
 
 
 const fs = require("fs");
@@ -782,16 +783,16 @@ async function generateLLMFeedback(data) {
     })();
 
   // ✅ 3) pack 없으면 여기서 종료 (다른 수업 템플릿 절대 사용 금지)
-  if (!pack){
+  if (!pack) {
     console("llm error : pack 없으면 여기서 종료");
     return { autoText: fallbackText, summary_by_domain: null };
-  } 
+  }
 
   // ✅ items 없으면 fallback만
-  if (items.length === 0){
+  if (items.length === 0) {
     console("llm error : items 없으면 여기서 종료");
     return { autoText: fallbackText, summary_by_domain: null };
-  } 
+  }
 
   // ✅ API 키 없으면 fallback만
   if (!process.env.OPENAI_API_KEY) {
@@ -820,15 +821,15 @@ async function generateLLMFeedback(data) {
       itemsForLLM.push({
         id: idNum,
         title: meta.line1 || "",
-        line2: meta.line2 || "",
+        line2: "",
         line3: getSafeLine3(optionLabel),
         useAgeNorm: AGE_NORM_ALLOWED_IDS.has(idNum),
       });
     }
 
-    if (itemsForLLM.length === 0){
+    if (itemsForLLM.length === 0) {
       console("llm error : itemsForLLM 없으면 여기서 종료");
-       return { autoText: fallbackText, summary_by_domain: null };
+      return { autoText: fallbackText, summary_by_domain: null };
     }
 
     // 5) LLM 1회 호출
@@ -856,7 +857,13 @@ async function generateLLMFeedback(data) {
             : "활동 과정에서 자신의 방식으로 참여하며 경험을 쌓아 가는 모습이 관찰되었어요.\n놀이를 이어가며 시도하고 완성해 보는 경험이 의미 있게 이어질 수 있어요.\n차분히 반복하며 익혀 가는 과정이 도움이 될 수 있어요."
         );
 
-      sections.push(buildFinalSection({ title: x.title, line2: x.line2, devParagraph }));
+      sections.push(
+        buildFinalSection({
+          title: x.title,
+          devParagraph
+        })
+      );
+
     }
 
     const out = sections.join("\n\n");
