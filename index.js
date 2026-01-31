@@ -652,6 +652,61 @@ function normalize3Lines(dev) {
   return `${a}\n${b}\n${c}`;
 }
 
+// ---------------------------
+// devParagraph 에코(활동 설명 반복) 제거 유틸
+// - line2를 출력에서 숨겼더라도, 모델이 첫 문장을 "활동 요약"으로 시작하면 중복처럼 보임
+// - options(선택문장)과 유사한 1문장을 제거해서 의미/해석 문장부터 시작하게 만듦
+// ---------------------------
+function normalizeForCompare(s = "") {
+  return String(s)
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .replace(/[.,!?~"“”'’(){}\[\]<>]/g, "")
+    .trim();
+}
+
+function isNearDuplicateSentence(a, b) {
+  const A = normalizeForCompare(a);
+  const B = normalizeForCompare(b);
+  if (!A || !B) return false;
+
+  // 완전/부분 포함 (짧은 문장 복붙 계열)
+  if (A === B) return true;
+  if (A.length >= 10 && B.includes(A)) return true;
+  if (B.length >= 10 && A.includes(B)) return true;
+
+  const ta = A.split(" ").filter(Boolean);
+  const tb = B.split(" ").filter(Boolean);
+  if (ta.length < 4 || tb.length < 4) return false;
+
+  const setB = new Set(tb);
+  let hit = 0;
+  for (const t of ta) if (setB.has(t)) hit++;
+
+  const overlap = hit / Math.max(ta.length, tb.length);
+  return overlap >= 0.78; // 살짝 보수적으로
+}
+
+/**
+ * devParagraph 3줄 중 "1줄째"가 활동 설명(=options/line2 에코)처럼 보이면 제거.
+ * - line2가 비어있는 구조라서, fallback 기준으로는 optionLabel을 비교 기준으로 쓰는 게 안정적
+ */
+function removeEchoFirstLine(devParagraph, echoBaseText) {
+  if (!devParagraph) return devParagraph;
+
+  const lines = String(devParagraph).split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+  if (lines.length === 0) return devParagraph;
+
+  if (echoBaseText && isNearDuplicateSentence(lines[0], echoBaseText)) {
+    lines.shift();
+  }
+
+  // 3줄 고정 복원
+  if (lines.length >= 3) return `${lines[0]}\n${lines[1]}\n${lines[2]}`;
+  return normalize3Lines(lines.join(" "));
+}
+
+
 // item 1개 섹션(제목 + line2 + LLM문단) 만들기
 function buildFinalSection({ title, devParagraph }) {
   return `${title}
@@ -784,13 +839,13 @@ async function generateLLMFeedback(data) {
 
   // ✅ 3) pack 없으면 여기서 종료 (다른 수업 템플릿 절대 사용 금지)
   if (!pack) {
-    console("llm error : pack 없으면 여기서 종료");
+    console.log("llm error : pack 없으면 여기서 종료");
     return { autoText: fallbackText, summary_by_domain: null };
   }
 
   // ✅ items 없으면 fallback만
   if (items.length === 0) {
-    console("llm error : items 없으면 여기서 종료");
+    console.log("llm error : items 없으면 여기서 종료");
     return { autoText: fallbackText, summary_by_domain: null };
   }
 
@@ -828,7 +883,7 @@ async function generateLLMFeedback(data) {
     }
 
     if (itemsForLLM.length === 0) {
-      console("llm error : itemsForLLM 없으면 여기서 종료");
+      console.log("llm error : itemsForLLM 없으면 여기서 종료");
       return { autoText: fallbackText, summary_by_domain: null };
     }
 
@@ -849,22 +904,26 @@ async function generateLLMFeedback(data) {
     // 6) 최종 섹션 조립
     const sections = [];
     for (const x of itemsForLLM) {
-      const devParagraph =
+      let devParagraph =
         devMap.get(x.id) ||
         normalize3Lines(
           x.useAgeNorm
             ? "활동을 통해 감각을 세밀하게 느끼고 조절해 보는 경험이 중요해요.\n놀이 과정에서 스스로 시도하며 익혀 가는 모습이 자연스럽게 나타날 수 있어요.\n반복 경험이 쌓일수록 더 편안하게 확장될 수 있어요."
             : "활동 과정에서 자신의 방식으로 참여하며 경험을 쌓아 가는 모습이 관찰되었어요.\n놀이를 이어가며 시도하고 완성해 보는 경험이 의미 있게 이어질 수 있어요.\n차분히 반복하며 익혀 가는 과정이 도움이 될 수 있어요."
         );
-
+    
+      // ✅ (2번) 첫 문장이 선택문장(optionLabel) 에코면 제거
+      // x.line3 는 itemsForLLM 만들 때 optionLabel 기반으로 들어감(getSafeLine3(optionLabel))
+      devParagraph = removeEchoFirstLine(devParagraph, x.line3);
+    
       sections.push(
         buildFinalSection({
           title: x.title,
           devParagraph
         })
       );
-
     }
+    
 
     const out = sections.join("\n\n");
     console.log("[FINAL_HAS_SUMMARY]", !!summary, "[SUMMARY_LEN]", (summary || "").length);
