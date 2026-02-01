@@ -806,7 +806,10 @@ async function generateLLMFeedback(data) {
 
   const items = Array.isArray(data.items) ? data.items : [];
   const month = Number(data.month);
-  const lessonKey = String(data.lesson || "").trim(); // "1-1"
+  const lessonKey = String(
+    data.lesson_key || data.lesson || ""
+  ).trim(); // ✅ 콘텐츠 키 (2-1~2-8)
+  
 
   const parentPref = data.parentPref || data.answers || null;
   const styleRules = buildStyleRules(parentPref || {});
