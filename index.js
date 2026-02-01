@@ -965,6 +965,8 @@ async function generateLLMFeedback(data) {
 app.post("/api/auto-feedback", async (req, res) => {
   try {
     console.log("💥 /api/auto-feedback 호출됨!");
+    console.log("[BODY keys]", Object.keys(req.body||{}));
+    
     const data = req.body || {};
     console.log("auto-feedback 요청 데이터:", JSON.stringify(data, null, 2));
 
