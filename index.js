@@ -809,7 +809,12 @@ async function generateLLMFeedback(data) {
   const lessonKey = String(
     data.lesson_key || data.lesson || ""
   ).trim(); // ✅ 콘텐츠 키 (2-1~2-8)
-  
+
+  console.log("[LLM] incoming lesson keys", {
+    lesson: data.lesson,
+    lesson_key: data.lesson_key,
+    resolvedLessonKey: lessonKey
+  });
 
   const parentPref = data.parentPref || data.answers || null;
   const styleRules = buildStyleRules(parentPref || {});
@@ -821,6 +826,13 @@ async function generateLLMFeedback(data) {
 
   try {
     monthJson = loadMonthItems(month);
+
+    console.log("[LLM] item json keys sample", Object.keys(monthJson).slice(0, 20));
+    console.log("[LLM] pack check", {
+      lessonKey,
+      hasPack: !!monthJson?.[lessonKey]
+    });
+
     pack = monthJson?.[lessonKey] || null;
   } catch (e) {
     console.error("items json 로드 실패:", e);
@@ -914,11 +926,11 @@ async function generateLLMFeedback(data) {
             ? "활동을 통해 감각을 세밀하게 느끼고 조절해 보는 경험이 중요해요.\n놀이 과정에서 스스로 시도하며 익혀 가는 모습이 자연스럽게 나타날 수 있어요.\n반복 경험이 쌓일수록 더 편안하게 확장될 수 있어요."
             : "활동 과정에서 자신의 방식으로 참여하며 경험을 쌓아 가는 모습이 관찰되었어요.\n놀이를 이어가며 시도하고 완성해 보는 경험이 의미 있게 이어질 수 있어요.\n차분히 반복하며 익혀 가는 과정이 도움이 될 수 있어요."
         );
-    
+
       // ✅ (2번) 첫 문장이 선택문장(optionLabel) 에코면 제거
       // x.line3 는 itemsForLLM 만들 때 optionLabel 기반으로 들어감(getSafeLine3(optionLabel))
       devParagraph = removeEchoFirstLine(devParagraph, x.line3);
-    
+
       sections.push(
         buildFinalSection({
           title: x.title,
@@ -926,7 +938,7 @@ async function generateLLMFeedback(data) {
         })
       );
     }
-    
+
 
     const out = sections.join("\n\n");
     console.log("[FINAL_HAS_SUMMARY]", !!summary, "[SUMMARY_LEN]", (summary || "").length);
