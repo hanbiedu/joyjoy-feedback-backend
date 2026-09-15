@@ -1,0 +1,663 @@
+{
+  "version": "1.0",
+  "name": "Hanbi Development Skill/SubSkill Taxonomy",
+  "description": "한비 발달데이터 프로젝트에서 item.json의 domain, skill, subSkills를 일관되게 정의하기 위한 기준 원본(Source of Truth).",
+  "domains": {
+    "cognition": {
+      "label": "인지 발달",
+      "description": "주의, 기억, 비교, 분류, 문제해결, 공간이해, 상징적 사고, 계획, 언어적 사고 등 정보를 이해하고 처리하는 능력",
+      "skills": {
+        "attention": {
+          "label": "주의집중",
+          "description": "특정 대상이나 활동에 관심을 두고 필요한 정보에 집중하는 능력",
+          "subSkills": {
+            "visual_attention": {
+              "label": "시각적 주의",
+              "description": "눈에 보이는 사람, 사물, 그림, 움직임 등에 시선을 두고 관심을 유지하는 능력"
+            },
+            "auditory_attention": {
+              "label": "청각적 주의",
+              "description": "말, 음악, 동물 소리, 환경음 등 들리는 소리에 귀를 기울이고 반응하는 능력"
+            },
+            "sustained_attention": {
+              "label": "지속적 주의",
+              "description": "하나의 활동이나 자극에 일정 시간 동안 관심을 유지하는 능력"
+            },
+            "selective_attention": {
+              "label": "선택적 주의",
+              "description": "여러 자극이 동시에 있을 때 필요한 대상이나 소리에 선택적으로 집중하는 능력"
+            }
+          }
+        },
+        "memory": {
+          "label": "기억",
+          "description": "이전에 본 것, 들은 것, 경험한 것을 저장하고 다시 알아보거나 떠올리는 능력",
+          "subSkills": {
+            "visual_memory": {
+              "label": "시각 기억",
+              "description": "이전에 본 그림, 사물, 위치, 모양 등의 시각 정보를 기억하는 능력"
+            },
+            "auditory_memory": {
+              "label": "청각 기억",
+              "description": "이전에 들은 말, 소리, 리듬 등의 청각 정보를 기억하는 능력"
+            },
+            "working_memory": {
+              "label": "작업기억",
+              "description": "방금 들었거나 본 정보를 잠시 기억하면서 동시에 과제를 수행하는 능력"
+            },
+            "recognition": {
+              "label": "재인",
+              "description": "이전에 경험한 대상이나 정보를 다시 보거나 들었을 때 알아보는 능력"
+            },
+            "recall": {
+              "label": "회상",
+              "description": "눈앞에 단서가 없어도 이전에 경험한 내용을 스스로 떠올리는 능력"
+            }
+          }
+        },
+        "comparison": {
+          "label": "비교",
+          "description": "두 개 이상의 대상에서 같은 점과 다른 점을 찾아 관계를 판단하는 능력",
+          "subSkills": {
+            "visual_comparison": {
+              "label": "시각 비교",
+              "description": "눈으로 보이는 두 대상의 특징을 비교하는 능력"
+            },
+            "size_comparison": {
+              "label": "크기 비교",
+              "description": "크다·작다, 길다·짧다 등의 차이를 구별하는 능력"
+            },
+            "shape_comparison": {
+              "label": "모양 비교",
+              "description": "원형, 각진 모양, 발자국 형태 등 형태적 차이를 비교하는 능력"
+            },
+            "feature_comparison": {
+              "label": "특징 비교",
+              "description": "색, 크기, 모양, 구성 요소 등 여러 특징을 기준으로 비교하는 능력"
+            }
+          }
+        },
+        "classification": {
+          "label": "분류",
+          "description": "공통된 특징이나 기준을 이용해 대상을 짝짓거나 그룹으로 나누는 능력",
+          "subSkills": {
+            "matching": {
+              "label": "짝짓기",
+              "description": "서로 같거나 관련 있는 두 대상을 찾아 연결하는 능력"
+            },
+            "grouping": {
+              "label": "묶기",
+              "description": "공통 특징을 가진 여러 대상을 하나의 집단으로 묶는 능력"
+            },
+            "sorting": {
+              "label": "분류하기",
+              "description": "색, 크기, 모양, 종류 등 정해진 기준에 따라 여러 대상을 나누는 능력"
+            },
+            "category_recognition": {
+              "label": "범주 인식",
+              "description": "동물, 과일, 곤충처럼 여러 대상이 같은 범주에 속한다는 것을 이해하는 능력"
+            }
+          }
+        },
+        "problem_solving": {
+          "label": "문제해결",
+          "description": "원하는 결과나 목표를 이루기 위해 방법을 탐색하고 시도하는 능력",
+          "subSkills": {
+            "goal_directed_search": {
+              "label": "목표 지향 탐색",
+              "description": "찾아야 하는 대상이나 해결해야 하는 목표를 기억하면서 탐색하는 능력"
+            },
+            "trial_and_error": {
+              "label": "시행착오",
+              "description": "여러 방법을 직접 시도하면서 성공하는 방법을 찾아가는 능력"
+            },
+            "cause_effect": {
+              "label": "원인·결과 이해",
+              "description": "자신의 행동이 어떤 결과를 만들어내는지 이해하는 능력"
+            },
+            "strategy_use": {
+              "label": "전략 사용",
+              "description": "문제를 해결하기 위해 적절한 방법이나 순서를 선택하여 사용하는 능력"
+            }
+          }
+        },
+        "spatial_reasoning": {
+          "label": "공간이해",
+          "description": "사물과 자신의 위치, 방향, 거리 등의 공간적 관계를 이해하고 활용하는 능력",
+          "subSkills": {
+            "position_understanding": {
+              "label": "위치 이해",
+              "description": "위·아래, 안·밖, 앞·뒤 등의 위치 관계를 이해하는 능력"
+            },
+            "direction_understanding": {
+              "label": "방향 이해",
+              "description": "왼쪽·오른쪽·앞쪽·뒤쪽 등 움직임이나 위치의 방향을 이해하는 능력"
+            },
+            "distance_understanding": {
+              "label": "거리 이해",
+              "description": "가깝다·멀다 등의 거리 차이를 이해하는 능력"
+            },
+            "spatial_relationship": {
+              "label": "공간 관계 이해",
+              "description": "여러 사물이 서로 어디에 위치하는지 관계를 파악하는 능력"
+            }
+          }
+        },
+        "symbolic_thinking": {
+          "label": "상징적 사고",
+          "description": "실제 사물이나 행동을 다른 대상이나 의미로 대신하여 이해하고 표현하는 능력",
+          "subSkills": {
+            "pretend_representation": {
+              "label": "가상 표상",
+              "description": "실제 상황이 아니어도 먹는 척, 자는 척처럼 상황을 상상해 표현하는 능력"
+            },
+            "object_substitution": {
+              "label": "사물 대체",
+              "description": "블록을 자동차처럼 사용하는 등 한 사물을 다른 것으로 상징하여 사용하는 능력"
+            },
+            "symbolic_representation": {
+              "label": "상징 표현",
+              "description": "그림, 모형, 말, 행동 등을 이용해 실제 대상이나 생각을 대신 표현하는 능력"
+            }
+          }
+        },
+        "planning": {
+          "label": "계획·구성",
+          "description": "목표를 이루기 위해 무엇을 어떤 순서와 방법으로 할지 생각하고 실행하는 능력",
+          "subSkills": {
+            "action_sequence": {
+              "label": "행동 순서 계획",
+              "description": "여러 행동을 적절한 순서로 이어서 수행하는 능력"
+            },
+            "goal_planning": {
+              "label": "목표 계획",
+              "description": "완성하려는 결과를 생각하고 필요한 행동을 선택하는 능력"
+            },
+            "construction_planning": {
+              "label": "구성 계획",
+              "description": "만들기·쌓기·꾸미기에서 결과를 예상하고 재료와 위치를 계획하는 능력"
+            },
+            "choice_planning": {
+              "label": "선택 계획",
+              "description": "여러 재료나 방법 중 목적에 맞는 것을 선택하는 능력"
+            }
+          }
+        },
+        "language_cognition": {
+          "label": "언어적 사고",
+          "description": "언어를 이해하고 개념과 연결하여 생각하거나 추론하는 능력",
+          "subSkills": {
+            "receptive_language": {
+              "label": "언어 이해",
+              "description": "단어, 문장, 질문 등 다른 사람이 하는 말을 이해하는 능력"
+            },
+            "concept_understanding": {
+              "label": "개념 이해",
+              "description": "크기, 색, 수량, 위치, 동물 등의 개념적 의미를 이해하는 능력"
+            },
+            "verbal_reasoning": {
+              "label": "언어적 추론",
+              "description": "질문을 듣고 이유나 관계를 생각하여 말로 답하는 능력"
+            },
+            "vocabulary_connection": {
+              "label": "단어·개념 연결",
+              "description": "단어를 실제 사물, 그림, 행동, 개념과 연결하는 능력"
+            },
+            "instruction_understanding": {
+              "label": "지시 이해",
+              "description": "가져와, 뒤집어봐, 같은 것을 찾아봐 등의 지시 내용을 이해하는 능력"
+            }
+          }
+        }
+      }
+    },
+    "motor": {
+      "label": "신체·운동 발달",
+      "description": "대근육, 이동, 균형, 신체조절, 소근육, 눈-손 협응, 양측 협응 등 신체를 움직이고 조절하는 능력",
+      "skills": {
+        "gross_motor": {
+          "label": "대근육 운동",
+          "description": "팔, 다리, 몸통 등 큰 근육을 사용해 전신을 움직이는 능력",
+          "subSkills": {
+            "jumping": {
+              "label": "점프",
+              "description": "두 발 또는 한 발을 이용해 몸을 바닥에서 띄우는 능력"
+            },
+            "squatting": {
+              "label": "앉았다 일어나기",
+              "description": "무릎을 굽혀 몸을 낮추고 다시 안정적으로 일어나는 능력"
+            },
+            "climbing": {
+              "label": "오르기",
+              "description": "손과 발을 이용하여 높은 곳이나 구조물을 올라가는 능력"
+            },
+            "whole_body_movement": {
+              "label": "전신 움직임",
+              "description": "팔·다리·몸통을 함께 사용하여 큰 움직임을 수행하는 능력"
+            }
+          }
+        },
+        "locomotion": {
+          "label": "이동 운동",
+          "description": "몸의 위치를 한 장소에서 다른 장소로 이동시키는 능력",
+          "subSkills": {
+            "walking": {
+              "label": "걷기",
+              "description": "균형을 유지하며 두 발을 번갈아 이동하는 능력"
+            },
+            "running": {
+              "label": "달리기",
+              "description": "걷기보다 빠른 속도로 안정적으로 이동하는 능력"
+            },
+            "crawling": {
+              "label": "기기",
+              "description": "손과 무릎 또는 몸을 이용해 바닥에서 이동하는 능력"
+            },
+            "stepping": {
+              "label": "발 디디기",
+              "description": "목표 지점이나 표시된 위치에 발을 정확하게 옮기는 능력"
+            },
+            "directional_movement": {
+              "label": "방향 이동",
+              "description": "앞·뒤·옆 등 정해진 방향으로 몸을 이동하는 능력"
+            }
+          }
+        },
+        "balance": {
+          "label": "균형",
+          "description": "움직이거나 멈춘 상태에서 몸의 중심을 유지하는 능력",
+          "subSkills": {
+            "static_balance": {
+              "label": "정적 균형",
+              "description": "한 장소에서 멈춘 상태로 자세를 안정적으로 유지하는 능력"
+            },
+            "dynamic_balance": {
+              "label": "동적 균형",
+              "description": "걷기, 뛰기, 방향 바꾸기 등 움직이면서 균형을 유지하는 능력"
+            },
+            "weight_shift": {
+              "label": "체중 이동",
+              "description": "몸의 무게 중심을 한쪽에서 다른 쪽으로 안정적으로 옮기는 능력"
+            }
+          }
+        },
+        "body_control": {
+          "label": "신체 조절",
+          "description": "자신의 움직임의 크기, 속도, 방향, 멈춤 등을 상황에 맞게 조절하는 능력",
+          "subSkills": {
+            "speed_control": {
+              "label": "속도 조절",
+              "description": "빠르게·천천히 움직임의 속도를 바꾸는 능력"
+            },
+            "direction_control": {
+              "label": "방향 조절",
+              "description": "움직이는 방향을 목표에 맞게 변경하는 능력"
+            },
+            "stop_control": {
+              "label": "멈춤 조절",
+              "description": "신호나 상황에 맞춰 움직임을 멈추는 능력"
+            },
+            "movement_scaling": {
+              "label": "움직임 크기 조절",
+              "description": "크게·작게, 높게·낮게 등 움직임의 범위를 조절하는 능력"
+            },
+            "motor_planning": {
+              "label": "운동 계획",
+              "description": "목표한 움직임을 하기 위해 몸을 어떤 순서와 방식으로 움직일지 조직하는 능력"
+            }
+          }
+        },
+        "fine_motor": {
+          "label": "소근육 운동",
+          "description": "손과 손가락의 작은 근육을 사용해 사물을 정교하게 다루는 능력",
+          "subSkills": {
+            "pincer_grasp": {
+              "label": "집게잡기",
+              "description": "엄지와 검지 끝을 이용해 작은 물체를 집는 능력"
+            },
+            "finger_control": {
+              "label": "손가락 조절",
+              "description": "손가락을 개별적으로 또는 섬세하게 움직이는 능력"
+            },
+            "finger_strength": {
+              "label": "손가락 힘 조절",
+              "description": "누르기, 집기, 찢기 등에서 필요한 손가락 힘을 적절히 사용하는 능력"
+            },
+            "grasp_release": {
+              "label": "잡기·놓기",
+              "description": "물체를 안정적으로 잡고 원하는 순간에 놓는 능력"
+            },
+            "manipulation": {
+              "label": "손 조작",
+              "description": "돌리기, 구기기, 찢기, 누르기 등 손으로 물체의 상태나 위치를 변화시키는 능력"
+            }
+          }
+        },
+        "hand_eye_coordination": {
+          "label": "눈-손 협응",
+          "description": "눈으로 확인한 위치나 움직임에 맞춰 손을 정확하게 사용하는 능력",
+          "subSkills": {
+            "reaching": {
+              "label": "목표물에 손 뻗기",
+              "description": "눈으로 확인한 물체를 향해 손을 정확히 뻗는 능력"
+            },
+            "placement_control": {
+              "label": "위치 조절",
+              "description": "물체를 정해진 위치에 놓거나 붙이는 능력"
+            },
+            "object_targeting": {
+              "label": "목표 맞추기",
+              "description": "던지기, 넣기, 끼우기 등에서 목표 위치를 정확히 맞추는 능력"
+            },
+            "visual_motor_integration": {
+              "label": "시각-운동 통합",
+              "description": "시각 정보를 바탕으로 손과 팔 움직임을 계획하고 조절하는 능력"
+            }
+          }
+        },
+        "bilateral_coordination": {
+          "label": "양측 협응",
+          "description": "양손 또는 몸의 양쪽을 함께 사용하여 하나의 행동을 수행하는 능력",
+          "subSkills": {
+            "two_hand_use": {
+              "label": "양손 사용",
+              "description": "하나의 활동에서 양손을 동시에 사용하는 능력"
+            },
+            "hand_stabilization": {
+              "label": "한 손 고정·한 손 조작",
+              "description": "한 손으로 물체를 잡고 다른 손으로 조작하는 능력"
+            },
+            "bilateral_same_action": {
+              "label": "양손 동일 동작",
+              "description": "양손으로 같은 동작을 동시에 수행하는 능력"
+            },
+            "bilateral_different_action": {
+              "label": "양손 다른 동작",
+              "description": "양손이 서로 다른 역할을 하면서 협응하는 능력"
+            }
+          }
+        }
+      }
+    },
+    "sensory": {
+      "label": "감각 발달",
+      "description": "촉각, 청각, 시각, 다감각 통합, 감각 변별 등 감각 정보를 받아들이고 구별하고 통합하는 능력",
+      "skills": {
+        "tactile": {
+          "label": "촉각",
+          "description": "피부와 손을 통해 재료의 질감, 압력 등의 촉각 정보를 느끼고 탐색하는 능력",
+          "subSkills": {
+            "tactile_exploration": {
+              "label": "촉각 탐색",
+              "description": "다양한 재료를 손이나 몸으로 직접 만져보며 탐색하는 능력"
+            },
+            "texture_response": {
+              "label": "질감 반응",
+              "description": "부드러움, 거침, 끈적임 등 서로 다른 질감에 반응하는 능력"
+            },
+            "pressure_exploration": {
+              "label": "압력 탐색",
+              "description": "누르기, 밀기, 꽉 쥐기 등을 통해 힘과 압력 변화를 경험하는 능력"
+            },
+            "tactile_tolerance": {
+              "label": "촉감 수용",
+              "description": "낯설거나 다양한 촉감의 재료를 회피하지 않고 받아들이며 탐색하는 정도"
+            }
+          }
+        },
+        "auditory": {
+          "label": "청각",
+          "description": "소리를 듣고 소리의 존재, 방향, 특징 등에 반응하는 능력",
+          "subSkills": {
+            "auditory_attention": {
+              "label": "청각적 주의",
+              "description": "특정 소리에 귀를 기울이고 관심을 유지하는 능력"
+            },
+            "sound_localization": {
+              "label": "소리 방향 찾기",
+              "description": "소리가 어느 방향이나 위치에서 나는지 찾는 능력"
+            },
+            "sound_imitation": {
+              "label": "소리 모방",
+              "description": "들은 소리나 리듬을 비슷하게 따라 하는 능력"
+            },
+            "auditory_response": {
+              "label": "소리 반응",
+              "description": "소리가 들렸을 때 고개 돌리기, 멈추기, 표정 변화 등으로 반응하는 능력"
+            }
+          }
+        },
+        "visual": {
+          "label": "시각",
+          "description": "눈을 통해 대상의 위치, 모양, 움직임 등의 정보를 받아들이고 탐색하는 능력",
+          "subSkills": {
+            "visual_attention": {
+              "label": "시각적 주의",
+              "description": "특정 사물이나 그림에 시선을 두고 관심을 유지하는 능력"
+            },
+            "visual_tracking": {
+              "label": "시각 추적",
+              "description": "움직이는 사람이나 사물을 눈으로 계속 따라가는 능력"
+            },
+            "visual_search": {
+              "label": "시각 탐색",
+              "description": "여러 대상 중 원하는 물체나 그림을 눈으로 찾아내는 능력"
+            },
+            "feature_detection": {
+              "label": "특징 발견",
+              "description": "색, 모양, 크기, 신체 부위 등 대상의 눈에 띄는 특징을 발견하는 능력"
+            }
+          }
+        },
+        "multisensory": {
+          "label": "다감각 통합",
+          "description": "두 가지 이상의 감각 정보를 함께 받아들이고 연결하여 활용하는 능력",
+          "subSkills": {
+            "visual_auditory_integration": {
+              "label": "시각·청각 통합",
+              "description": "보이는 대상과 들리는 소리를 연결하는 능력"
+            },
+            "tactile_visual_integration": {
+              "label": "촉각·시각 통합",
+              "description": "만져본 느낌과 눈으로 본 특징을 연결하는 능력"
+            },
+            "tactile_auditory_integration": {
+              "label": "촉각·청각 통합",
+              "description": "재료를 만지는 행동과 그때 발생하는 소리를 연결하는 능력"
+            },
+            "multisensory_integration": {
+              "label": "다감각 통합",
+              "description": "시각·청각·촉각 등 여러 감각 정보를 종합하여 대상이나 상황을 이해하는 능력"
+            }
+          }
+        },
+        "sensory_discrimination": {
+          "label": "감각 변별",
+          "description": "감각 자극 사이의 차이를 구별하는 능력",
+          "subSkills": {
+            "texture_discrimination": {
+              "label": "질감 구별",
+              "description": "부드럽다·거칠다 등 촉감 차이를 구별하는 능력"
+            },
+            "sound_discrimination": {
+              "label": "소리 구별",
+              "description": "서로 다른 소리, 높낮이, 크기, 리듬 등의 차이를 구별하는 능력"
+            },
+            "visual_discrimination": {
+              "label": "시각 변별",
+              "description": "색, 모양, 크기 등 시각적 특징의 차이를 구별하는 능력"
+            },
+            "intensity_discrimination": {
+              "label": "강도 구별",
+              "description": "소리 크기, 압력, 밝기 등 자극의 강도 차이를 구별하는 능력"
+            }
+          }
+        }
+      }
+    },
+    "social": {
+      "label": "사회·상호작용 발달",
+      "description": "공동주의, 상호작용, 차례 주고받기, 모방, 역할놀이, 협력, 자기표현 등 다른 사람과 관계를 맺고 함께 활동하는 능력",
+      "skills": {
+        "joint_attention": {
+          "label": "공동주의",
+          "description": "다른 사람과 같은 대상이나 사건에 함께 관심을 기울이는 능력",
+          "subSkills": {
+            "shared_gaze": {
+              "label": "함께 바라보기",
+              "description": "교사나 보호자와 동시에 같은 대상을 바라보는 능력"
+            },
+            "gaze_following": {
+              "label": "시선 따라가기",
+              "description": "다른 사람이 바라보는 방향이나 대상을 따라 바라보는 능력"
+            },
+            "shared_object_attention": {
+              "label": "공동 대상 관심",
+              "description": "하나의 사물이나 활동에 다른 사람과 함께 관심을 유지하는 능력"
+            },
+            "attention_shifting": {
+              "label": "주의 전환",
+              "description": "사람과 사물 사이에서 시선과 관심을 적절하게 이동하는 능력"
+            }
+          }
+        },
+        "interaction": {
+          "label": "상호작용",
+          "description": "사람과 말, 표정, 몸짓, 행동 등을 서로 주고받으며 관계를 이어가는 능력",
+          "subSkills": {
+            "response_to_others": {
+              "label": "타인에게 반응하기",
+              "description": "상대방의 말이나 행동에 적절하게 반응하는 능력"
+            },
+            "social_initiative": {
+              "label": "상호작용 시작하기",
+              "description": "다른 사람이 먼저 제안하지 않아도 스스로 관심이나 행동을 표현해 상호작용을 시작하는 능력"
+            },
+            "reciprocal_interaction": {
+              "label": "상호 주고받기",
+              "description": "한쪽 반응으로 끝나지 않고 서로 행동이나 말을 반복적으로 주고받는 능력"
+            },
+            "shared_engagement": {
+              "label": "함께 활동 지속하기",
+              "description": "다른 사람과 하나의 놀이 또는 활동에 함께 참여하며 관계를 유지하는 능력"
+            }
+          }
+        },
+        "turn_taking": {
+          "label": "차례 주고받기",
+          "description": "자신의 차례와 상대의 차례를 이해하고 순서를 주고받는 능력",
+          "subSkills": {
+            "wait_turn": {
+              "label": "차례 기다리기",
+              "description": "상대방이 활동하는 동안 자신의 차례를 기다리는 능력"
+            },
+            "give_turn": {
+              "label": "차례 넘기기",
+              "description": "자신의 행동 후 상대방에게 기회나 순서를 넘기는 능력"
+            },
+            "receive_turn": {
+              "label": "자기 차례 수행하기",
+              "description": "자신의 차례가 되었을 때 적절하게 활동에 참여하는 능력"
+            },
+            "reciprocal_turn": {
+              "label": "반복적 차례 주고받기",
+              "description": "한 번으로 끝나지 않고 여러 차례 순서를 주고받는 능력"
+            }
+          }
+        },
+        "imitation": {
+          "label": "모방",
+          "description": "다른 사람의 움직임, 행동, 소리 등을 관찰한 뒤 비슷하게 따라 하는 능력",
+          "subSkills": {
+            "motor_imitation": {
+              "label": "신체동작 모방",
+              "description": "점프, 손 흔들기 등 몸의 움직임을 따라 하는 능력"
+            },
+            "sound_imitation": {
+              "label": "소리 모방",
+              "description": "말소리, 동물 소리, 리듬 등을 듣고 따라 하는 능력"
+            },
+            "action_imitation": {
+              "label": "행동 모방",
+              "description": "사물을 사용하는 방법이나 특정 행동 순서를 따라 하는 능력"
+            },
+            "delayed_imitation": {
+              "label": "지연 모방",
+              "description": "이전에 보았던 행동을 시간이 지난 뒤 기억하여 다시 따라 하는 능력"
+            }
+          }
+        },
+        "role_play": {
+          "label": "역할놀이",
+          "description": "사람이나 상황의 역할을 이해하고 가상의 놀이 안에서 표현하는 능력",
+          "subSkills": {
+            "role_understanding": {
+              "label": "역할 이해",
+              "description": "자신과 상대가 어떤 역할을 맡고 있는지 이해하는 능력"
+            },
+            "role_switching": {
+              "label": "역할 바꾸기",
+              "description": "찾는 사람·숨기는 사람처럼 역할을 서로 바꾸어 수행하는 능력"
+            },
+            "pretend_action": {
+              "label": "가상 행동",
+              "description": "먹는 척, 치료하는 척 등 실제 상황을 놀이로 표현하는 능력"
+            },
+            "scenario_extension": {
+              "label": "상황 확장",
+              "description": "주어진 역할놀이에 새로운 행동이나 상황을 스스로 추가하는 능력"
+            }
+          }
+        },
+        "cooperation": {
+          "label": "협력",
+          "description": "다른 사람과 하나의 목표를 공유하고 함께 행동하여 결과를 만들어가는 능력",
+          "subSkills": {
+            "shared_goal": {
+              "label": "공동 목표 이해",
+              "description": "자신과 상대가 같은 목표를 가지고 활동하고 있음을 이해하는 능력"
+            },
+            "collaborative_action": {
+              "label": "공동 행동",
+              "description": "다른 사람과 역할을 나누거나 힘을 합쳐 활동하는 능력"
+            },
+            "help_exchange": {
+              "label": "도움 주고받기",
+              "description": "필요한 상황에서 도움을 요청하거나 상대에게 도움을 제공하는 능력"
+            },
+            "rule_following": {
+              "label": "공동 규칙 따르기",
+              "description": "함께하는 놀이의 약속이나 규칙을 이해하고 따르는 능력"
+            }
+          }
+        },
+        "self_expression": {
+          "label": "자기표현",
+          "description": "자신의 생각, 감정, 의도, 선호를 다른 사람이 알 수 있도록 표현하는 능력",
+          "subSkills": {
+            "nonverbal_expression": {
+              "label": "비언어적 표현",
+              "description": "표정, 손짓, 몸짓, 시선 등 말 이외의 방식으로 표현하는 능력"
+            },
+            "verbal_expression": {
+              "label": "언어적 표현",
+              "description": "단어 또는 문장을 사용해 자신의 생각이나 의도를 표현하는 능력"
+            },
+            "preference_expression": {
+              "label": "선호 표현",
+              "description": "좋아함·싫어함, 원하는 것 등을 선택이나 행동으로 표현하는 능력"
+            },
+            "emotion_expression": {
+              "label": "감정 표현",
+              "description": "즐거움, 놀람, 불편함 등의 감정을 표현하는 능력"
+            },
+            "idea_expression": {
+              "label": "생각 표현",
+              "description": "자신이 생각한 방법, 이야기, 결과 등을 말이나 행동으로 나타내는 능력"
+            }
+          }
+        }
+      }
+    }
+  }
+}
