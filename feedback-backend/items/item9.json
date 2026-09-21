@@ -1421,6 +1421,314 @@
           }
         ]
       }
+    },
+    "9-8": {
+      "item1": {
+        "domain": "cognition",
+        "skill": "comparison",
+        "subSkills": [
+          "visual_comparison",
+          "shape_comparison",
+          "feature_comparison"
+        ],
+        "observableBehaviors": [
+          "compare_moon_shapes",
+          "match_same_moon_shapes",
+          "distinguish_crescent_half_and_full_moon"
+        ],
+        "difficulty": 4,
+        "line1": "① 달의 모양 비교하고 맞추기",
+        "line2": "초승달·반달·그믐달·보름달의 모양을 관찰하고 같은 모양끼리 맞추며 달 그림의 공통점과 차이점을 비교해보았어요.",
+        "options": [
+          {
+            "value": 1,
+            "label": "교사가 보여주는 달 그림을 함께 바라보았어요."
+          },
+          {
+            "value": 2,
+            "label": "서로 다른 달 그림을 번갈아 살펴보며 모양에 관심을 보였어요."
+          },
+          {
+            "value": 3,
+            "label": "교사의 비교 시범을 보고 같은 모양의 달을 찾아보았어요."
+          },
+          {
+            "value": 4,
+            "label": "서로 다른 두 가지 달 그림 중 같은 모양을 스스로 골랐어요."
+          },
+          {
+            "value": 5,
+            "label": "여러 달 그림에서 보름달과 반달을 구별하고 같은 모양끼리 맞췄어요."
+          },
+          {
+            "value": 6,
+            "label": "가느다란 달과 반달, 보름달의 형태를 비교하며 같은 그림을 각각 맞췄어요."
+          },
+          {
+            "value": 7,
+            "label": "초승달과 그믐달의 휘어진 방향 차이까지 살펴 같은 모양을 구별했어요."
+          },
+          {
+            "value": 8,
+            "label": "달 그림의 둥근 정도와 휘어진 방향을 함께 비교하고 차이를 가리키거나 말로 설명했어요."
+          }
+        ]
+      },
+      "item2": {
+        "domain": "social",
+        "skill": "imitation",
+        "subSkills": [
+          "motor_imitation",
+          "sound_imitation"
+        ],
+        "observableBehaviors": [
+          "imitate_star_twinkle_gesture",
+          "imitate_raising_star_hands",
+          "imitate_star_song_sounds"
+        ],
+        "difficulty": 4,
+        "line1": "② 별 노래와 손동작 따라 하기",
+        "line2": "별 노래를 함께 부르며 교사의 소리와 손동작을 따라 하고, 별이 반짝이거나 높이 올라가는 모습을 몸으로 표현해보았어요.",
+        "options": [
+          {
+            "value": 1,
+            "label": "교사가 부르는 별 노래와 손동작을 바라보았어요."
+          },
+          {
+            "value": 2,
+            "label": "교사의 손동작에 관심을 보이며 손을 움직여보았어요."
+          },
+          {
+            "value": 3,
+            "label": "교사의 반복 시범을 보고 손을 올리는 동작을 따라 해보았어요."
+          },
+          {
+            "value": 4,
+            "label": "별이 반짝이는 손동작을 교사의 시범에 맞춰 따라 했어요."
+          },
+          {
+            "value": 5,
+            "label": "손을 올리기와 반짝이기 두 가지 동작을 차례로 따라 했어요."
+          },
+          {
+            "value": 6,
+            "label": "별 노래의 짧은 소절이나 리듬을 따라 하며 손동작도 함께 표현했어요."
+          },
+          {
+            "value": 7,
+            "label": "교사가 부르는 소절과 동작의 변화를 보고 듣고 연이어 따라 했어요."
+          },
+          {
+            "value": 8,
+            "label": "교사의 반복 시범 없이도 앞서 들은 짧은 소절과 본 동작을 연결해 재현했어요."
+          }
+        ]
+      },
+      "item3": {
+        "domain": "cognition",
+        "skill": "spatial_reasoning",
+        "subSkills": [
+          "position_understanding",
+          "spatial_relationship"
+        ],
+        "observableBehaviors": [
+          "place_stars_above_and_below_moon",
+          "place_stars_beside_moon",
+          "arrange_moon_and_stars"
+        ],
+        "difficulty": 4,
+        "line1": "③ 달과 별로 밤하늘 구성하기",
+        "line2": "검은 전지 위에 달과 별을 자유롭게 배치하고 달의 위·아래·옆에 별을 놓아보며 사물 사이의 위치 관계를 탐색했어요.",
+        "options": [
+          {
+            "value": 1,
+            "label": "교사와 함께 전지 위에 놓인 달과 별을 바라보았어요."
+          },
+          {
+            "value": 2,
+            "label": "교사의 도움을 받아 별을 전지 위에 올려보았어요."
+          },
+          {
+            "value": 3,
+            "label": "교사가 가리킨 위치에 별을 놓아보았어요."
+          },
+          {
+            "value": 4,
+            "label": "교사의 시범을 보고 달 옆에 별을 놓아보았어요."
+          },
+          {
+            "value": 5,
+            "label": "달의 위나 아래 중 교사가 말한 한 위치에 별을 놓았어요."
+          },
+          {
+            "value": 6,
+            "label": "달의 위·아래·옆을 구별하며 말한 위치에 별을 놓았어요."
+          },
+          {
+            "value": 7,
+            "label": "여러 별을 달 주변에 배치하고 각 별의 위치를 가리키거나 말로 표현했어요."
+          },
+          {
+            "value": 8,
+            "label": "스스로 정한 위치에 달과 별을 구성하고 원하는 위치 관계에 맞춰 배치를 조정했어요."
+          }
+        ]
+      },
+      "item4": {
+        "domain": "motor",
+        "skill": "balance",
+        "subSkills": [
+          "dynamic_balance",
+          "weight_shift"
+        ],
+        "observableBehaviors": [
+          "step_between_moon_markers",
+          "shift_weight_on_moon_path",
+          "maintain_balance_when_landing"
+        ],
+        "difficulty": 4,
+        "line1": "④ 달 징검다리 건너기",
+        "line2": "바닥에 놓인 보름달을 따라 한 발씩 옮기거나 두 발로 점프하며 이동하고, 몸의 중심과 체중 이동을 조절해보았어요.",
+        "options": [
+          {
+            "value": 1,
+            "label": "교사의 신체적 도움을 받아 달 위로 발을 옮겨보았어요."
+          },
+          {
+            "value": 2,
+            "label": "교사의 손을 잡고 가까운 두 달 사이를 이동해보았어요."
+          },
+          {
+            "value": 3,
+            "label": "교사의 손을 잡고 여러 달을 따라 걸으며 체중을 옮겼어요."
+          },
+          {
+            "value": 4,
+            "label": "가까운 달 사이를 스스로 한 발씩 옮기며 걸었어요."
+          },
+          {
+            "value": 5,
+            "label": "여러 달을 연속으로 밟으며 몸의 중심을 유지했어요."
+          },
+          {
+            "value": 6,
+            "label": "가까운 달로 두 발을 모아 뛰고 착지하며 균형을 잡았어요."
+          },
+          {
+            "value": 7,
+            "label": "달 사이의 간격에 맞춰 보폭이나 점프 거리를 바꾸며 균형을 유지했어요."
+          },
+          {
+            "value": 8,
+            "label": "방향과 간격이 다른 달 징검다리에서 걷기와 점프를 조절하며 안정적으로 이동했어요."
+          }
+        ]
+      },
+      "item5": {
+        "domain": "motor",
+        "skill": "hand_eye_coordination",
+        "subSkills": [
+          "placement_control",
+          "object_targeting",
+          "visual_motor_integration"
+        ],
+        "observableBehaviors": [
+          "balance_balloon_on_plate",
+          "adjust_plate_under_balloon",
+          "tap_balloon_upward"
+        ],
+        "difficulty": 4,
+        "line1": "⑤ 풍선 달 옮기고 띄우기",
+        "line2": "종이접시 위의 노란 풍선을 보며 접시의 위치와 기울기를 조절해 옮기고, 손이나 접시로 풍선을 톡톡 올리며 눈과 손의 움직임을 맞춰보았어요.",
+        "options": [
+          {
+            "value": 1,
+            "label": "교사의 도움을 받아 접시 위에 풍선을 올려보았어요."
+          },
+          {
+            "value": 2,
+            "label": "교사와 접시를 함께 잡고 풍선의 움직임을 바라보았어요."
+          },
+          {
+            "value": 3,
+            "label": "풍선을 올린 접시를 스스로 잡고 잠시 유지해보았어요."
+          },
+          {
+            "value": 4,
+            "label": "풍선을 바라보며 접시를 수평으로 유지하고 짧은 거리를 옮겼어요."
+          },
+          {
+            "value": 5,
+            "label": "풍선이 움직이는 쪽에 맞춰 접시의 위치를 조절하며 옮겼어요."
+          },
+          {
+            "value": 6,
+            "label": "위로 띄운 풍선을 눈으로 따라가며 손이나 접시로 맞혀 올렸어요."
+          },
+          {
+            "value": 7,
+            "label": "내려오는 풍선의 위치에 맞춰 손이나 접시를 움직여 여러 번 올렸어요."
+          },
+          {
+            "value": 8,
+            "label": "풍선의 움직임에 맞춰 접시의 위치와 치는 힘을 조절하며 옮기기와 띄우기를 안정적으로 수행했어요."
+          }
+        ]
+      },
+      "item6": {
+        "domain": "sensory",
+        "skill": "tactile",
+        "subSkills": [
+          "tactile_exploration",
+          "texture_response",
+          "pressure_exploration"
+        ],
+        "observableBehaviors": [
+          "explore_fluorescent_paint_texture",
+          "dab_and_smear_paint",
+          "vary_pressure_when_stamping"
+        ],
+        "difficulty": 4,
+        "line1": "⑥ 형광 물감으로 밤하늘 탐색하기",
+        "line2": "크레파스로 꾸민 밤하늘에 손가락이나 스펀지로 형광 물감을 찍고 문지르며 물감의 촉감과 누르는 힘에 따른 느낌의 변화를 탐색했어요.",
+        "options": [
+          {
+            "value": 1,
+            "label": "교사와 스펀지를 함께 잡고 물감을 전지에 찍어보았어요."
+          },
+          {
+            "value": 2,
+            "label": "스펀지에 묻은 물감을 눌러보며 손에 전달되는 느낌에 반응했어요."
+          },
+          {
+            "value": 3,
+            "label": "손가락으로 물감을 짧게 만져보며 촉감을 탐색했어요."
+          },
+          {
+            "value": 4,
+            "label": "손가락이나 손바닥으로 물감을 반복해 만지고 눌러보았어요."
+          },
+          {
+            "value": 5,
+            "label": "물감을 찍거나 문지르며 서로 다른 손의 느낌을 탐색했어요."
+          },
+          {
+            "value": 6,
+            "label": "손가락과 스펀지를 번갈아 사용하며 닿는 느낌의 차이를 탐색했어요."
+          },
+          {
+            "value": 7,
+            "label": "누르는 힘과 문지르는 방법을 바꾸며 물감과 스펀지의 촉감을 비교했어요."
+          },
+          {
+            "value": 8,
+            "label": "원하는 촉감에 따라 손이나 스펀지, 누르는 힘을 스스로 선택하고 느낌의 차이를 몸짓이나 말로 표현했어요."
+          }
+        ]
+      }
     }
+  
+
+    
     
 }
