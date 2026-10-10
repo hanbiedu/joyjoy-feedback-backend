@@ -307,6 +307,314 @@
       ]
     }
   },
+  "10-2": {
+    "item1": {
+      "domain": "cognition",
+      "skill": "attention",
+      "subSkills": [
+        "visual_attention",
+        "joint_attention",
+        "sustained_attention"
+      ],
+      "observableBehaviors": [
+        "look_at_rice_field_background",
+        "follow_pointing_to_sparrow_and_scarecrow",
+        "attend_to_multiple_field_objects"
+      ],
+      "difficulty": 2,
+      "line1": "① 논 배경판에서 벼·참새·허수아비 알아보기",
+      "line2": "논 배경판을 보며 벼, 참새, 허수아비를 찾아보고 교사가 가리키는 그림에 시선을 옮기며 관심을 이어가 보았어요.",
+      "options": [
+        {
+          "value": 1,
+          "label": "교사가 펼친 논 배경판을 잠시 바라보았어요."
+        },
+        {
+          "value": 2,
+          "label": "교사가 가까이 보여주는 벼 그림에 시선을 두었어요."
+        },
+        {
+          "value": 3,
+          "label": "교사가 가리킨 참새나 허수아비 쪽으로 시선을 옮겼어요."
+        },
+        {
+          "value": 4,
+          "label": "교사의 안내에 따라 벼와 참새 그림을 차례로 바라보았어요."
+        },
+        {
+          "value": 5,
+          "label": "교사가 이름을 말하면 해당 그림을 찾아 바라보았어요."
+        },
+        {
+          "value": 6,
+          "label": "벼·참새·허수아비를 번갈아 살펴보며 관심을 보였어요."
+        },
+        {
+          "value": 7,
+          "label": "교사의 도움을 적게 받으며 여러 그림을 손가락으로 가리켜 보았어요."
+        },
+        {
+          "value": 8,
+          "label": "스스로 그림들을 찾아 살펴보고 참새나 허수아비에 대한 관심을 이어갔어요."
+        }
+      ]
+    },
+    "item2": {
+      "domain": "motor",
+      "skill": "hand_eye_coordination",
+      "subSkills": [
+        "reaching",
+        "object_targeting",
+        "placement_control"
+      ],
+      "observableBehaviors": [
+        "insert_paper_rice_into_slots",
+        "remove_paper_rice_for_harvest",
+        "place_harvested_rice_in_basket"
+      ],
+      "difficulty": 2,
+      "line1": "② 종이 벼 꽂고 모형 낫으로 수확하기",
+      "line2": "종이 벼를 논 교구의 꽂는 위치에 넣고 빼며 모형 낫으로 베는 흉내를 낸 뒤 바구니에 담아보았어요.",
+      "options": [
+        {
+          "value": 1,
+          "label": "교사가 종이 벼를 꽂고 수확하는 모습을 바라보았어요."
+        },
+        {
+          "value": 2,
+          "label": "교사의 손 움직임 도움을 받아 종이 벼를 잡아보았어요."
+        },
+        {
+          "value": 3,
+          "label": "교사가 가리킨 꽂는 곳을 향해 종이 벼를 가져가 보았어요."
+        },
+        {
+          "value": 4,
+          "label": "교사가 교구를 잡아주면 종이 벼를 꽂아보았어요."
+        },
+        {
+          "value": 5,
+          "label": "꽂은 종이 벼를 손으로 빼서 바구니에 넣어보았어요."
+        },
+        {
+          "value": 6,
+          "label": "스스로 여러 개의 종이 벼를 꽂고 하나씩 빼보았어요."
+        },
+        {
+          "value": 7,
+          "label": "모형 낫으로 베는 흉내를 낸 뒤 벼를 바구니에 옮겼어요."
+        },
+        {
+          "value": 8,
+          "label": "꽂기·베는 흉내·바구니에 담기를 순서대로 여러 번 이어갔어요."
+        }
+      ]
+    },
+    "item3": {
+      "domain": "sensory",
+      "skill": "tactile",
+      "subSkills": [
+        "tactile_exploration",
+        "texture_response",
+        "manipulation"
+      ],
+      "observableBehaviors": [
+        "touch_model_rice",
+        "touch_and_rub_real_straw",
+        "gather_and_spread_straw"
+      ],
+      "difficulty": 2,
+      "line1": "③ 모형 벼와 실제 지푸라기 촉감 탐색하기",
+      "line2": "모형 벼를 흔들어보고 실제 지푸라기를 손끝과 손바닥으로 만지며 까슬까슬한 촉감과 바스락거리는 소리를 탐색했어요.",
+      "options": [
+        {
+          "value": 1,
+          "label": "교사가 보여주는 모형 벼와 지푸라기를 바라보았어요."
+        },
+        {
+          "value": 2,
+          "label": "교사의 도움을 받아 지푸라기에 손끝을 잠시 대어보았어요."
+        },
+        {
+          "value": 3,
+          "label": "지푸라기를 만진 뒤 표정이나 손의 움직임으로 반응했어요."
+        },
+        {
+          "value": 4,
+          "label": "스스로 지푸라기를 잡거나 흔들어보았어요."
+        },
+        {
+          "value": 5,
+          "label": "지푸라기를 손끝이나 손바닥으로 반복해서 만져보았어요."
+        },
+        {
+          "value": 6,
+          "label": "지푸라기를 비비거나 흔들어 소리를 내보았어요."
+        },
+        {
+          "value": 7,
+          "label": "지푸라기를 모았다 펼치며 촉감과 소리의 변화를 살펴보았어요."
+        },
+        {
+          "value": 8,
+          "label": "만지기·흔들기·모으기·펼치기를 스스로 바꾸어가며 탐색을 이어갔어요."
+        }
+      ]
+    },
+    "item4": {
+      "domain": "cognition",
+      "skill": "object_permanence",
+      "subSkills": [
+        "hidden_object_search",
+        "visual_search",
+        "size_discrimination"
+      ],
+      "observableBehaviors": [
+        "lift_wrapping_paper_to_find_grasshopper",
+        "search_under_straw",
+        "compare_found_grasshopper_sizes"
+      ],
+      "difficulty": 2,
+      "line1": "④ 소포지와 지푸라기 밑 종이 메뚜기 찾기",
+      "line2": "소포지와 실제 지푸라기 밑에 숨은 종이 메뚜기를 들춰 찾아보고 크기가 다른 메뚜기를 살펴보았어요.",
+      "options": [
+        {
+          "value": 1,
+          "label": "교사가 소포지 아래에서 종이 메뚜기를 꺼내는 모습을 바라보았어요."
+        },
+        {
+          "value": 2,
+          "label": "교사가 소포지를 들추자 나타난 메뚜기를 바라보았어요."
+        },
+        {
+          "value": 3,
+          "label": "교사의 도움을 받아 소포지나 지푸라기를 들어보았어요."
+        },
+        {
+          "value": 4,
+          "label": "메뚜기가 숨은 위치로 손을 뻗어 찾아보았어요."
+        },
+        {
+          "value": 5,
+          "label": "스스로 소포지를 들춰 종이 메뚜기를 찾아냈어요."
+        },
+        {
+          "value": 6,
+          "label": "지푸라기도 들춰 다른 위치에 숨은 메뚜기를 찾아냈어요."
+        },
+        {
+          "value": 7,
+          "label": "여러 위치를 차례로 살펴보며 메뚜기를 반복해서 찾았어요."
+        },
+        {
+          "value": 8,
+          "label": "찾은 메뚜기들의 크기 차이에도 관심을 보이고 큰 것과 작은 것을 구분해보았어요."
+        }
+      ]
+    },
+    "item5": {
+      "domain": "cognition",
+      "skill": "observation",
+      "subSkills": [
+        "visual_tracking",
+        "feature_attention",
+        "movement_imitation"
+      ],
+      "observableBehaviors": [
+        "observe_live_grasshopper_in_container",
+        "attend_to_antennae_and_legs",
+        "imitate_grasshopper_jump"
+      ],
+      "difficulty": 2,
+      "line1": "⑤ 살아 있는 메뚜기 관찰하고 움직임 따라 하기",
+      "line2": "관찰통 속 살아 있는 메뚜기의 움직임과 눈·더듬이·긴 뒷다리를 살펴보고 폴짝폴짝 뛰는 모습을 몸으로 표현해보았어요.",
+      "options": [
+        {
+          "value": 1,
+          "label": "교사가 보여주는 관찰통 속 메뚜기를 잠시 바라보았어요."
+        },
+        {
+          "value": 2,
+          "label": "메뚜기가 움직일 때 시선이나 고개를 돌려 반응했어요."
+        },
+        {
+          "value": 3,
+          "label": "교사가 가리키는 메뚜기의 몸 부분을 바라보았어요."
+        },
+        {
+          "value": 4,
+          "label": "메뚜기가 움직이는 방향을 눈으로 따라가 보았어요."
+        },
+        {
+          "value": 5,
+          "label": "교사의 안내에 따라 더듬이나 긴 뒷다리를 살펴보았어요."
+        },
+        {
+          "value": 6,
+          "label": "메뚜기의 움직임을 보고 몸을 위아래로 움직이며 흉내 냈어요."
+        },
+        {
+          "value": 7,
+          "label": "교사의 점프 시범을 보고 폴짝 뛰는 동작을 따라 했어요."
+        },
+        {
+          "value": 8,
+          "label": "메뚜기의 몸과 움직임을 번갈아 관찰하고 스스로 점프 동작으로 표현했어요."
+        }
+      ]
+    },
+    "item6": {
+      "domain": "motor",
+      "skill": "fine_motor",
+      "subSkills": [
+        "crayon_grasp",
+        "mark_making",
+        "hand_control"
+      ],
+      "observableBehaviors": [
+        "hold_crayon_for_grasshopper_coloring",
+        "make_marks_on_grasshopper_sheet",
+        "color_grasshopper_body_and_legs"
+      ],
+      "difficulty": 2,
+      "line1": "⑥ 메뚜기 그림 색칠하기",
+      "line2": "메뚜기 색칠 교재에 크레파스로 선과 색을 더하며 손의 움직임을 조절하고 자신만의 메뚜기를 꾸며보았어요.",
+      "options": [
+        {
+          "value": 1,
+          "label": "교사가 메뚜기 그림에 색칠하는 모습을 바라보았어요."
+        },
+        {
+          "value": 2,
+          "label": "교사의 도움을 받아 크레파스를 손에 쥐어보았어요."
+        },
+        {
+          "value": 3,
+          "label": "교사와 함께 크레파스를 움직여 종이에 자국을 남겨보았어요."
+        },
+        {
+          "value": 4,
+          "label": "스스로 크레파스를 움직이며 그림 위에 선을 그어보았어요."
+        },
+        {
+          "value": 5,
+          "label": "크레파스를 반복해서 움직여 메뚜기 그림을 색칠했어요."
+        },
+        {
+          "value": 6,
+          "label": "메뚜기의 몸이나 다리 쪽을 살펴보며 그 부분에 색을 더했어요."
+        },
+        {
+          "value": 7,
+          "label": "좋아하는 색을 골라 메뚜기 여러 부분에 색칠했어요."
+        },
+        {
+          "value": 8,
+          "label": "크레파스를 쥐고 움직이는 방향을 스스로 조절하며 메뚜기 그림을 끝까지 꾸며보았어요."
+        }
+      ]
+    }
+  },
   "10-5": {
     "item1": {
       "domain": "cognition",
@@ -613,5 +921,316 @@
         }
       ]
     }
+  },
+
+  
+"10-6": {
+  "item1": {
+    "domain": "cognition",
+    "skill": "attention",
+    "subSkills": [
+      "visual_attention",
+      "sustained_attention",
+      "selective_attention"
+    ],
+    "observableBehaviors": [
+      "look_at_rice_field_background",
+      "identify_sparrow_and_scarecrow",
+      "attend_to_field_features"
+    ],
+    "difficulty": 4,
+    "line1": "① 가을 논과 허수아비 알아보기",
+    "line2": "가을 논 배경판에서 벼, 참새, 허수아비를 살펴보고, 교사의 질문에 따라 그림 속 대상을 찾아보며 관심을 이어갔어요.",
+    "options": [
+      {
+        "value": 1,
+        "label": "교사가 보여주는 논 배경판을 잠시 바라보았어요."
+      },
+      {
+        "value": 2,
+        "label": "교사가 가리키는 벼나 참새, 허수아비에 시선을 두었어요."
+      },
+      {
+        "value": 3,
+        "label": "교사의 도움을 받아 배경판에서 벼와 허수아비를 찾아보았어요."
+      },
+      {
+        "value": 4,
+        "label": "교사가 이름을 말하면 해당 그림으로 시선을 옮기거나 손으로 가리켰어요."
+      },
+      {
+        "value": 5,
+        "label": "벼, 참새, 허수아비 중 교사가 말하는 대상을 스스로 찾아보았어요."
+      },
+      {
+        "value": 6,
+        "label": "여러 그림 사이에서 교사가 질문한 대상을 찾아 가리키며 관찰을 이어갔어요."
+      },
+      {
+        "value": 7,
+        "label": "교사가 질문하지 않아도 배경판의 여러 대상을 스스로 살펴보고 가리켰어요."
+      },
+      {
+        "value": 8,
+        "label": "벼, 참새, 허수아비를 차례로 살펴보며 각각의 특징이나 역할을 말하거나 몸짓으로 표현했어요."
+      }
+    ]
+  },
+  "item2": {
+    "domain": "motor",
+    "skill": "hand_eye_coordination",
+    "subSkills": [
+      "object_targeting",
+      "placement_control",
+      "visual_motor_integration"
+    ],
+    "observableBehaviors": [
+      "insert_paper_rice_stalks",
+      "pretend_to_harvest_with_sickle",
+      "place_harvested_rice_in_basket"
+    ],
+    "difficulty": 4,
+    "line1": "② 종이 벼 꽂고 수확하기",
+    "line2": "종이 벼를 논에 하나씩 꽂고 모형 낫으로 베는 흉내를 낸 뒤 바구니에 담으며 눈과 손의 움직임을 조절해보았어요.",
+    "options": [
+      {
+        "value": 1,
+        "label": "교사의 손 움직임 도움을 받아 종이 벼를 꽂아보았어요."
+      },
+      {
+        "value": 2,
+        "label": "종이 벼를 잡고 교사가 가리키는 꽂는 위치로 가져가 보았어요."
+      },
+      {
+        "value": 3,
+        "label": "교사가 위치를 안내해주면 종이 벼를 구멍에 맞춰 꽂아보았어요."
+      },
+      {
+        "value": 4,
+        "label": "꽂는 위치를 바라보며 종이 벼를 스스로 꽂았어요."
+      },
+      {
+        "value": 5,
+        "label": "종이 벼를 여러 개 꽂고 모형 낫으로 베는 동작을 따라 했어요."
+      },
+      {
+        "value": 6,
+        "label": "벼를 꽂고 모형 낫으로 베어 바구니에 담는 활동을 순서대로 수행했어요."
+      },
+      {
+        "value": 7,
+        "label": "벼의 위치에 따라 손과 모형 낫의 방향을 조절하며 수확했어요."
+      },
+      {
+        "value": 8,
+        "label": "벼를 꽂고 수확하는 과정에서 위치를 스스로 확인하고 손의 움직임을 조절하며 활동을 이어갔어요."
+      }
+    ]
+  },
+  "item3": {
+    "domain": "sensory",
+    "skill": "tactile",
+    "subSkills": [
+      "tactile_exploration",
+      "texture_response",
+      "tactile_discrimination"
+    ],
+    "observableBehaviors": [
+      "touch_real_rice_straw",
+      "rub_and_spread_straw",
+      "explore_straw_texture"
+    ],
+    "difficulty": 4,
+    "line1": "③ 모형 벼와 실제 지푸라기 탐색하기",
+    "line2": "모형 벼를 살펴보고 실제 지푸라기를 손끝과 손바닥으로 만지거나 비비고 펼치며 까슬까슬한 촉감과 바스락거리는 소리를 탐색했어요.",
+    "options": [
+      {
+        "value": 1,
+        "label": "교사가 지푸라기를 만지는 모습을 바라보았어요."
+      },
+      {
+        "value": 2,
+        "label": "교사의 도움을 받아 지푸라기에 손끝을 잠시 대어보았어요."
+      },
+      {
+        "value": 3,
+        "label": "스스로 지푸라기를 잡거나 만지며 촉감을 살펴보았어요."
+      },
+      {
+        "value": 4,
+        "label": "손끝으로 지푸라기를 여러 번 만지며 촉감을 탐색했어요."
+      },
+      {
+        "value": 5,
+        "label": "손끝과 손바닥을 번갈아 사용해 지푸라기를 만져보았어요."
+      },
+      {
+        "value": 6,
+        "label": "지푸라기를 비비거나 흔들며 촉감과 바스락거리는 소리를 탐색했어요."
+      },
+      {
+        "value": 7,
+        "label": "지푸라기를 펼치고 모으는 등 손의 움직임을 바꾸며 촉감의 차이를 살펴보았어요."
+      },
+      {
+        "value": 8,
+        "label": "지푸라기를 여러 방법으로 만지고 조작하며 느껴지는 촉감과 소리의 차이를 몸짓이나 말로 표현했어요."
+      }
+    ]
+  },
+  "item4": {
+    "domain": "cognition",
+    "skill": "visual_discrimination",
+    "subSkills": [
+      "visual_search",
+      "size_discrimination",
+      "object_identification"
+    ],
+    "observableBehaviors": [
+      "search_for_paper_grasshoppers",
+      "find_grasshoppers_under_paper_and_straw",
+      "compare_grasshopper_sizes"
+    ],
+    "difficulty": 4,
+    "line1": "④ 소포지와 지푸라기 밑 메뚜기 찾기",
+    "line2": "소포지와 지푸라기 밑에 숨겨진 종이 메뚜기를 찾아보고, 발견한 메뚜기의 크기를 비교하며 큰 것과 작은 것을 구별해보았어요.",
+    "options": [
+      {
+        "value": 1,
+        "label": "교사가 소포지 밑에서 메뚜기를 꺼내 보여주는 모습을 바라보았어요."
+      },
+      {
+        "value": 2,
+        "label": "교사가 가리키는 소포지나 지푸라기 밑을 살펴보았어요."
+      },
+      {
+        "value": 3,
+        "label": "교사의 도움을 받아 소포지나 지푸라기를 들추고 메뚜기를 찾아보았어요."
+      },
+      {
+        "value": 4,
+        "label": "소포지와 지푸라기를 스스로 들추며 숨겨진 메뚜기를 찾았어요."
+      },
+      {
+        "value": 5,
+        "label": "여러 곳에 숨겨진 메뚜기를 찾아 바구니에 모았어요."
+      },
+      {
+        "value": 6,
+        "label": "찾은 메뚜기를 나란히 놓고 큰 메뚜기와 작은 메뚜기를 구별했어요."
+      },
+      {
+        "value": 7,
+        "label": "숨겨진 메뚜기를 스스로 찾아 크기별로 나누고 개수를 세어보았어요."
+      },
+      {
+        "value": 8,
+        "label": "여러 위치를 체계적으로 살펴보며 메뚜기를 찾고 크기와 개수를 비교해 결과를 표현했어요."
+      }
+    ]
+  },
+  "item5": {
+    "domain": "cognition",
+    "skill": "observation",
+    "subSkills": [
+      "feature_identification",
+      "visual_comparison",
+      "biological_observation"
+    ],
+    "observableBehaviors": [
+      "observe_live_grasshopper",
+      "identify_antennae_and_legs",
+      "compare_paper_and_live_grasshopper"
+    ],
+    "difficulty": 4,
+    "line1": "⑤ 살아 있는 메뚜기 관찰하기",
+    "line2": "실제 메뚜기의 움직임을 관찰하고 눈, 더듬이, 여섯 개의 다리를 살펴보며 종이 메뚜기와 생김새를 비교해보았어요.",
+    "options": [
+      {
+        "value": 1,
+        "label": "교사가 보여주는 관찰통 속 메뚜기를 잠시 바라보았어요."
+      },
+      {
+        "value": 2,
+        "label": "메뚜기가 움직일 때 시선을 두거나 움직임을 따라 바라보았어요."
+      },
+      {
+        "value": 3,
+        "label": "교사가 가리키는 메뚜기의 눈이나 더듬이, 다리를 살펴보았어요."
+      },
+      {
+        "value": 4,
+        "label": "교사의 질문에 따라 메뚜기의 눈이나 더듬이, 다리를 찾아 가리켰어요."
+      },
+      {
+        "value": 5,
+        "label": "메뚜기의 여러 신체 부위를 스스로 찾아보며 생김새를 관찰했어요."
+      },
+      {
+        "value": 6,
+        "label": "메뚜기의 다리를 함께 세어보고 긴 뒷다리의 특징을 살펴보았어요."
+      },
+      {
+        "value": 7,
+        "label": "종이 메뚜기와 실제 메뚜기를 비교하며 움직임이나 생김새의 차이를 찾아보았어요."
+      },
+      {
+        "value": 8,
+        "label": "메뚜기의 신체 특징과 움직임을 연결해 관찰하고 발견한 차이를 말이나 몸짓으로 설명했어요."
+      }
+    ]
+  },
+  "item6": {
+    "domain": "social",
+    "skill": "role_play",
+    "subSkills": [
+      "pretend_action",
+      "role_understanding",
+      "scenario_extension"
+    ],
+    "observableBehaviors": [
+      "decorate_scarecrow_costume",
+      "wear_scarecrow_costume",
+      "pretend_to_chase_sparrows"
+    ],
+    "difficulty": 4,
+    "line1": "⑥ 허수아비 옷 입고 참새 쫓기",
+    "line2": "소포지와 지푸라기로 허수아비 옷을 꾸미고 직접 입어본 뒤 양팔을 벌리고 참새를 쫓는 흉내를 내며 논을 지키는 역할놀이를 해보았어요.",
+    "options": [
+      {
+        "value": 1,
+        "label": "교사가 허수아비 옷을 보여주고 참새를 쫓는 모습을 바라보았어요."
+      },
+      {
+        "value": 2,
+        "label": "교사의 도움을 받아 소포지 옷을 만지거나 지푸라기를 붙여보았어요."
+      },
+      {
+        "value": 3,
+        "label": "교사와 함께 허수아비 옷을 입고 양팔을 벌려보았어요."
+      },
+      {
+        "value": 4,
+        "label": "허수아비 옷을 입고 교사의 시범을 따라 팔을 벌리거나 흔들었어요."
+      },
+      {
+        "value": 5,
+        "label": "참새가 나타나는 상황에 맞춰 팔을 흔들며 쫓는 흉내를 냈어요."
+      },
+      {
+        "value": 6,
+        "label": "허수아비 역할을 이해하고 참새가 다가오면 스스로 쫓는 행동을 했어요."
+      },
+      {
+        "value": 7,
+        "label": "교사와 참새와 허수아비 역할을 주고받으며 상황에 맞는 행동을 이어갔어요."
+      },
+      {
+        "value": 8,
+        "label": "참새가 벼를 먹으러 오는 상황을 스스로 표현하고 허수아비 역할에 맞는 행동을 더하며 놀이를 확장했어요."
+      }
+    ]
   }
+}
+
 }
