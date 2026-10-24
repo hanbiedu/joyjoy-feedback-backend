@@ -921,6 +921,313 @@
       ]
     }
   },
+  "10-4": {
+    "item1": {
+      "domain": "sensory",
+      "skill": "auditory",
+      "subSkills": [
+        "auditory_attention",
+        "auditory_response"
+      ],
+      "observableBehaviors": [
+        "respond_to_rustling_leaves_in_bag",
+        "notice_squeaking_sound_when_pressed",
+        "distinguish_rustling_and_squeaking"
+      ],
+      "difficulty": 2,
+      "line1": "① 바스락바스락 낙엽 소리 탐색하기",
+      "line2": "도토리 모자를 쓴 비니가 가져온 낙엽 지퍼백을 만지고 눌러보며 바스락거리는 소리와 삑삑 소리를 듣고 반응해보았어요.",
+      "options": [
+        {
+          "value": 1,
+          "label": "교사가 지퍼백을 누르며 내는 소리에 표정이나 몸 움직임으로 반응했어요."
+        },
+        {
+          "value": 2,
+          "label": "바스락 소리가 나자 지퍼백 쪽으로 시선이나 고개를 돌렸어요."
+        },
+        {
+          "value": 3,
+          "label": "교사의 도움을 받아 지퍼백을 눌러 소리를 들어보았어요."
+        },
+        {
+          "value": 4,
+          "label": "소리가 나면 지퍼백을 다시 만지거나 눌러보았어요."
+        },
+        {
+          "value": 5,
+          "label": "스스로 지퍼백을 눌러 바스락 소리를 반복해서 내보았어요."
+        },
+        {
+          "value": 6,
+          "label": "삑삑 소리가 나는 부분에도 관심을 보이며 서로 다른 소리에 반응했어요."
+        },
+        {
+          "value": 7,
+          "label": "바스락 소리와 삑삑 소리가 나는 부분을 번갈아 눌러보았어요."
+        },
+        {
+          "value": 8,
+          "label": "두 소리를 구별해 원하는 소리가 나는 부분을 스스로 찾아 반복해서 눌러보았어요."
+        }
+      ]
+    },
+    "item2": {
+      "domain": "sensory",
+      "skill": "visual",
+      "subSkills": [
+        "visual_attention",
+        "feature_detection",
+        "visual_tracking"
+      ],
+      "observableBehaviors": [
+        "look_at_maple_and_ginkgo_leaves",
+        "notice_leaf_colors_and_shapes",
+        "track_falling_leaves"
+      ],
+      "difficulty": 2,
+      "line1": "② 단풍잎·은행잎 관찰하고 낙엽비 맞기",
+      "line2": "빨강·노랑·주황 나뭇잎과 단풍잎·은행잎의 모양을 살펴보고, 위에서 떨어지는 낙엽을 눈으로 따라가 보았어요.",
+      "options": [
+        {
+          "value": 1,
+          "label": "교사가 가까이 보여주는 나뭇잎을 잠시 바라보았어요."
+        },
+        {
+          "value": 2,
+          "label": "단풍잎이나 은행잎을 보여주면 시선을 두었어요."
+        },
+        {
+          "value": 3,
+          "label": "교사가 흔드는 나뭇잎의 움직임을 눈으로 따라보았어요."
+        },
+        {
+          "value": 4,
+          "label": "교사가 가리키는 서로 다른 색의 나뭇잎을 차례로 바라보았어요."
+        },
+        {
+          "value": 5,
+          "label": "하늘에서 떨어뜨린 낙엽이 내려오는 모습을 눈으로 따라보았어요."
+        },
+        {
+          "value": 6,
+          "label": "단풍잎과 은행잎을 번갈아 살펴보며 모양의 차이에 관심을 보였어요."
+        },
+        {
+          "value": 7,
+          "label": "교사의 안내 없이도 원하는 색이나 모양의 나뭇잎을 골라 살펴보았어요."
+        },
+        {
+          "value": 8,
+          "label": "여러 나뭇잎의 색과 모양을 스스로 관찰하고, 떨어지는 낙엽의 위치를 끝까지 따라보았어요."
+        }
+      ]
+    },
+    "item3": {
+      "domain": "sensory",
+      "skill": "auditory",
+      "subSkills": [
+        "sound_localization",
+        "auditory_attention",
+        "auditory_response"
+      ],
+      "observableBehaviors": [
+        "turn_toward_hidden_squeak",
+        "search_for_squeaker_under_leaves",
+        "press_found_squeaker"
+      ],
+      "difficulty": 3,
+      "line1": "③ 낙엽 속 삑삑 소리 찾아보기",
+      "line2": "낙엽 아래에 숨겨진 삑삑 소리를 듣고 소리가 나는 쪽을 바라보거나 손과 몸을 움직여 찾아보았어요.",
+      "options": [
+        {
+          "value": 1,
+          "label": "교사가 들려주는 삑삑 소리에 표정이나 몸 움직임으로 반응했어요."
+        },
+        {
+          "value": 2,
+          "label": "삑삑 소리를 듣고 소리가 나는 방향으로 고개나 시선을 돌렸어요."
+        },
+        {
+          "value": 3,
+          "label": "교사가 소리 나는 곳을 가리키면 그쪽을 바라보았어요."
+        },
+        {
+          "value": 4,
+          "label": "교사의 도움을 받아 낙엽을 들추고 소리 나는 도구를 찾아보았어요."
+        },
+        {
+          "value": 5,
+          "label": "소리가 나는 낙엽 쪽으로 손을 뻗거나 몸을 이동해보았어요."
+        },
+        {
+          "value": 6,
+          "label": "교사가 가리키지 않아도 소리 나는 위치를 찾아 낙엽을 들추어보았어요."
+        },
+        {
+          "value": 7,
+          "label": "소리를 따라 숨겨진 도구를 찾아 직접 눌러 삑삑 소리를 내보았어요."
+        },
+        {
+          "value": 8,
+          "label": "도구를 다른 위치에 숨겨도 소리를 듣고 스스로 방향을 바꾸어 찾아 눌러보았어요."
+        }
+      ]
+    },
+    "item4": {
+      "domain": "social",
+      "skill": "interaction",
+      "subSkills": [
+        "response_to_others",
+        "reciprocal_interaction",
+        "shared_engagement"
+      ],
+      "observableBehaviors": [
+        "respond_to_peekaboo_behind_leaf_fan",
+        "exchange_fanning_actions_with_teacher",
+        "continue_shared_fan_play"
+      ],
+      "difficulty": 2,
+      "line1": "④ 나뭇잎 부채로 슝슝·까꿍 놀이하기",
+      "line2": "나뭇잎 부채로 바람을 느끼고 낙엽을 날리며, 교사와 얼굴을 가렸다 보여주는 까꿍 놀이를 주고받아 보았어요.",
+      "options": [
+        {
+          "value": 1,
+          "label": "교사가 부채로 바람을 보내거나 까꿍을 하면 표정이나 움직임으로 반응했어요."
+        },
+        {
+          "value": 2,
+          "label": "부채 뒤에서 교사 얼굴이 나타나면 교사 쪽을 바라보았어요."
+        },
+        {
+          "value": 3,
+          "label": "교사가 반복하는 까꿍에 미소나 소리, 몸짓으로 반응했어요."
+        },
+        {
+          "value": 4,
+          "label": "교사의 도움을 받아 부채를 잡고 바람을 만들어보았어요."
+        },
+        {
+          "value": 5,
+          "label": "교사가 부채로 얼굴을 가렸다 보여주면 다시 하기를 기대하며 관심을 보였어요."
+        },
+        {
+          "value": 6,
+          "label": "교사와 번갈아 부채를 흔들거나 까꿍을 하며 놀이를 이어갔어요."
+        },
+        {
+          "value": 7,
+          "label": "스스로 부채를 움직여 낙엽을 날린 뒤 교사의 반응을 살펴보았어요."
+        },
+        {
+          "value": 8,
+          "label": "먼저 부채로 얼굴을 가렸다 보여주거나 바람을 보내며 교사와의 놀이를 반복해 이어갔어요."
+        }
+      ]
+    },
+    "item5": {
+      "domain": "sensory",
+      "skill": "tactile",
+      "subSkills": [
+        "tactile_exploration",
+        "texture_response",
+        "pressure_exploration"
+      ],
+      "observableBehaviors": [
+        "touch_bubble_wrap_surface",
+        "press_bubbles_with_fingers_or_palm",
+        "explore_soft_fruit_mesh_with_hand_or_foot"
+      ],
+      "difficulty": 2,
+      "line1": "⑤ 뽁뽁이와 과일 완충재 촉감 탐색하기",
+      "line2": "뽁뽁이를 손으로 누르고 과일 완충재를 만지거나 손과 발에 대보면서 올록볼록하고 폭신폭신한 느낌을 경험해보았어요.",
+      "options": [
+        {
+          "value": 1,
+          "label": "교사가 뽁뽁이나 완충재를 손에 닿게 하자 표정이나 움직임으로 반응했어요."
+        },
+        {
+          "value": 2,
+          "label": "교사가 보여주는 두 재료 중 하나를 바라보거나 손을 뻗었어요."
+        },
+        {
+          "value": 3,
+          "label": "교사의 도움을 받아 뽁뽁이를 손바닥으로 눌러보았어요."
+        },
+        {
+          "value": 4,
+          "label": "과일 완충재를 손으로 쥐거나 만지며 촉감을 탐색했어요."
+        },
+        {
+          "value": 5,
+          "label": "스스로 뽁뽁이를 손가락으로 눌러보거나 과일 완충재를 반복해서 만져보았어요."
+        },
+        {
+          "value": 6,
+          "label": "두 재료를 번갈아 만져보며 서로 다른 촉감에 반응했어요."
+        },
+        {
+          "value": 7,
+          "label": "손바닥과 발바닥 등 다양한 부위로 재료를 탐색해보았어요."
+        },
+        {
+          "value": 8,
+          "label": "두 재료의 촉감 차이에 관심을 보이며 스스로 누르는 방법이나 탐색하는 부위를 바꾸어보았어요."
+        }
+      ]
+    },
+    "item6": {
+      "domain": "motor",
+      "skill": "hand_eye_coordination",
+      "subSkills": [
+        "reaching",
+        "placement_control",
+        "visual_motor_integration"
+      ],
+      "observableBehaviors": [
+        "reach_for_paint_stamp_tool",
+        "place_stamp_on_tree_paper",
+        "repeat_stamps_on_tree_and_ground"
+      ],
+      "difficulty": 3,
+      "line1": "⑥ 뽁뽁이·완충재로 가을나무 찍기",
+      "line2": "빨강·노랑·주황 물감을 묻힌 뽁뽁이와 과일 완충재를 활동지의 나무와 바닥에 톡톡 찍어 알록달록 가을나무를 꾸며보았어요.",
+      "options": [
+        {
+          "value": 1,
+          "label": "교사가 도구로 물감을 찍는 모습을 바라보았어요."
+        },
+        {
+          "value": 2,
+          "label": "교사가 건네는 찍기 도구를 잡거나 손을 뻗었어요."
+        },
+        {
+          "value": 3,
+          "label": "교사의 손 도움을 받아 나무 활동지에 도구를 눌러 찍어보았어요."
+        },
+        {
+          "value": 4,
+          "label": "교사가 위치를 안내하면 그곳에 찍기 도구를 대보았어요."
+        },
+        {
+          "value": 5,
+          "label": "스스로 도구를 잡고 나무 위에 물감을 한두 번 찍어보았어요."
+        },
+        {
+          "value": 6,
+          "label": "나무의 여러 위치로 손을 옮기며 물감 찍기를 반복했어요."
+        },
+        {
+          "value": 7,
+          "label": "뽁뽁이와 과일 완충재를 번갈아 사용해 나무 위와 아래를 꾸며보았어요."
+        },
+        {
+          "value": 8,
+          "label": "원하는 위치를 스스로 찾아 여러 색과 도구로 나뭇잎과 떨어진 낙엽을 표현했어요."
+        }
+      ]
+    }
+  },
   "10-5": {
     "item1": {
       "domain": "cognition",
@@ -1839,6 +2146,308 @@
         {
           "value": 8,
           "label": "환자의 증상을 묻거나 치료 후 양치 방법을 알려주는 등 스스로 대사와 상황을 더해 놀이를 확장했어요."
+        }
+      ]
+    }
+  },
+  "10-8": {
+    "item1": {
+      "domain": "cognition",
+      "skill": "comparison",
+      "subSkills": [
+        "visual_comparison",
+        "shape_comparison",
+        "feature_comparison"
+      ],
+      "observableBehaviors": [
+        "inspect_maple_and_ginkgo_leaves",
+        "compare_leaf_shapes",
+        "identify_leaf_color_differences"
+      ],
+      "difficulty": 3,
+      "line1": "① 알록달록 단풍잎과 은행잎 비교하기",
+      "line2": "도토리 모자를 쓴 비니와 함께 낙엽을 꺼내보고 단풍잎과 은행잎의 색깔, 모양을 관찰하며 공통점과 차이점을 찾아보았어요.",
+      "options": [
+        {
+          "value": 1,
+          "label": "교사가 보여주는 단풍잎이나 은행잎을 잠시 바라보았어요."
+        },
+        {
+          "value": 2,
+          "label": "교사의 안내를 받으며 두 종류의 나뭇잎을 차례로 살펴보았어요."
+        },
+        {
+          "value": 3,
+          "label": "교사가 가리키는 나뭇잎의 색깔이나 모양에 관심을 보였어요."
+        },
+        {
+          "value": 4,
+          "label": "두 나뭇잎을 나란히 놓고 서로 다른 모습을 관찰했어요."
+        },
+        {
+          "value": 5,
+          "label": "교사의 질문에 따라 단풍잎과 은행잎 중 해당하는 잎을 골라보았어요."
+        },
+        {
+          "value": 6,
+          "label": "단풍잎과 은행잎의 모양이 다르다는 것을 말이나 손짓으로 표현했어요."
+        },
+        {
+          "value": 7,
+          "label": "두 나뭇잎의 색깔과 모양에서 차이점을 각각 찾아보았어요."
+        },
+        {
+          "value": 8,
+          "label": "교사의 도움 없이 두 잎을 비교하고 서로 다른 특징을 구체적으로 설명했어요."
+        }
+      ]
+    },
+    "item2": {
+      "domain": "sensory",
+      "skill": "sensory_discrimination",
+      "subSkills": [
+        "sound_discrimination",
+        "intensity_discrimination"
+      ],
+      "observableBehaviors": [
+        "listen_to_leaf_crunching_while_walking",
+        "compare_sounds_from_slow_and_fast_steps",
+        "respond_to_changes_in_leaf_sound"
+      ],
+      "difficulty": 3,
+      "line1": "② 낙엽비 맞고 낙엽 밟는 소리 비교하기",
+      "line2": "나뭇잎을 위에서 떨어뜨려 낙엽비를 만들고, 낙엽 위를 천천히 또는 빠르게 걸으며 바스락거리는 소리의 변화를 들어보았어요.",
+      "options": [
+        {
+          "value": 1,
+          "label": "교사가 낙엽을 떨어뜨리거나 밟는 모습을 바라보았어요."
+        },
+        {
+          "value": 2,
+          "label": "교사와 함께 낙엽 위를 걸으며 나는 소리에 반응했어요."
+        },
+        {
+          "value": 3,
+          "label": "낙엽을 밟을 때 들리는 바스락 소리에 귀를 기울였어요."
+        },
+        {
+          "value": 4,
+          "label": "낙엽을 반복해서 밟으며 나는 소리를 들어보았어요."
+        },
+        {
+          "value": 5,
+          "label": "교사의 도움을 받아 느리게 걷기와 빠르게 걷기를 시도했어요."
+        },
+        {
+          "value": 6,
+          "label": "걷는 속도를 바꾸며 소리의 차이가 있는지 살펴보았어요."
+        },
+        {
+          "value": 7,
+          "label": "천천히 밟을 때와 빠르게 밟을 때 들리는 소리의 차이를 표현했어요."
+        },
+        {
+          "value": 8,
+          "label": "스스로 걷는 방법과 속도를 바꿔가며 소리가 어떻게 달라지는지 비교해 설명했어요."
+        }
+      ]
+    },
+    "item3": {
+      "domain": "cognition",
+      "skill": "problem_solving",
+      "subSkills": [
+        "cause_effect",
+        "trial_and_error"
+      ],
+      "observableBehaviors": [
+        "fan_leaves_with_gentle_motion",
+        "fan_leaves_with_stronger_motion",
+        "adjust_fanning_to_move_leaves"
+      ],
+      "difficulty": 4,
+      "line1": "③ 나뭇잎 부채로 바람의 세기 조절하기",
+      "line2": "나뭇잎 부채를 살살 또는 세게 부쳐 낙엽을 날려보고, 부채질하는 힘에 따라 낙엽이 움직이는 모습이 달라지는 것을 관찰했어요.",
+      "options": [
+        {
+          "value": 1,
+          "label": "교사가 부채로 낙엽을 날리는 모습을 관심 있게 바라보았어요."
+        },
+        {
+          "value": 2,
+          "label": "교사의 도움을 받아 부채를 움직여 바람을 만들어보았어요."
+        },
+        {
+          "value": 3,
+          "label": "부채를 움직일 때 낙엽이 움직이는 모습을 알아차렸어요."
+        },
+        {
+          "value": 4,
+          "label": "스스로 부채를 움직여 낙엽을 날려보았어요."
+        },
+        {
+          "value": 5,
+          "label": "교사를 따라 부채를 약하게 또는 세게 움직여보았어요."
+        },
+        {
+          "value": 6,
+          "label": "부채질의 세기를 바꾸며 낙엽이 움직이는 차이를 관찰했어요."
+        },
+        {
+          "value": 7,
+          "label": "낙엽을 더 멀리 날리기 위해 부채질을 조절해보았어요."
+        },
+        {
+          "value": 8,
+          "label": "바람의 세기와 낙엽의 움직임을 연결해 설명하고, 원하는 방향이나 거리로 날리도록 스스로 조절했어요."
+        }
+      ]
+    },
+    "item4": {
+      "domain": "cognition",
+      "skill": "classification",
+      "subSkills": [
+        "grouping",
+        "sorting"
+      ],
+      "observableBehaviors": [
+        "sweep_leaves_into_one_area",
+        "identify_leaf_colors",
+        "sort_leaves_by_color"
+      ],
+      "difficulty": 4,
+      "line1": "④ 낙엽 청소하고 색깔별로 모으기",
+      "line2": "놀이 빗자루로 낙엽을 쓸어 모으고, 빨강·노랑·주황색 낙엽을 색깔에 따라 나누어 바구니에 담아보았어요.",
+      "options": [
+        {
+          "value": 1,
+          "label": "교사가 빗자루로 낙엽을 모으는 모습을 바라보았어요."
+        },
+        {
+          "value": 2,
+          "label": "교사의 도움을 받아 빗자루로 낙엽을 쓸어보았어요."
+        },
+        {
+          "value": 3,
+          "label": "교사와 함께 모은 낙엽을 바구니에 담아보았어요."
+        },
+        {
+          "value": 4,
+          "label": "교사가 골라준 같은 색깔의 낙엽을 한곳에 놓아보았어요."
+        },
+        {
+          "value": 5,
+          "label": "두 가지 색깔의 낙엽을 교사의 안내에 따라 나누어보았어요."
+        },
+        {
+          "value": 6,
+          "label": "빨강·노랑·주황 낙엽을 색깔별로 구분해 모아보았어요."
+        },
+        {
+          "value": 7,
+          "label": "서로 섞인 낙엽 중 같은 색을 찾아 스스로 분류했어요."
+        },
+        {
+          "value": 8,
+          "label": "교사의 도움 없이 여러 색의 낙엽을 분류하고 자신이 나눈 기준을 말로 설명했어요."
+        }
+      ]
+    },
+    "item5": {
+      "domain": "sensory",
+      "skill": "sensory_discrimination",
+      "subSkills": [
+        "texture_discrimination"
+      ],
+      "observableBehaviors": [
+        "feel_bubble_wrap_surface",
+        "feel_fruit_mesh_cushioning",
+        "compare_two_material_textures"
+      ],
+      "difficulty": 3,
+      "line1": "⑤ 뽁뽁이와 과일 완충재 촉감 비교하기",
+      "line2": "뽁뽁이와 과일 완충재를 손으로 만지고 눌러보거나 안전하게 고정한 재료를 밟으며 올록볼록함과 폭신폭신함의 차이를 탐색했어요.",
+      "options": [
+        {
+          "value": 1,
+          "label": "교사가 보여주는 뽁뽁이와 과일 완충재를 바라보았어요."
+        },
+        {
+          "value": 2,
+          "label": "교사의 도움을 받아 한 가지 재료를 손으로 만져보았어요."
+        },
+        {
+          "value": 3,
+          "label": "뽁뽁이와 과일 완충재를 각각 손으로 만져보았어요."
+        },
+        {
+          "value": 4,
+          "label": "두 재료를 누르거나 쥐며 서로 다른 촉감을 경험했어요."
+        },
+        {
+          "value": 5,
+          "label": "한 가지 재료를 반복해서 만지며 촉감을 탐색했어요."
+        },
+        {
+          "value": 6,
+          "label": "두 재료를 번갈아 만지며 느낌이 다르다는 것을 표현했어요."
+        },
+        {
+          "value": 7,
+          "label": "올록볼록함과 폭신폭신함 등 각 재료의 촉감을 단어나 몸짓으로 구분했어요."
+        },
+        {
+          "value": 8,
+          "label": "스스로 여러 방식으로 두 재료를 탐색하고 촉감의 차이를 구체적으로 비교해 설명했어요."
+        }
+      ]
+    },
+    "item6": {
+      "domain": "motor",
+      "skill": "hand_eye_coordination",
+      "subSkills": [
+        "placement_control",
+        "visual_motor_integration"
+      ],
+      "observableBehaviors": [
+        "dip_stamp_material_in_paint",
+        "stamp_colored_leaves_on_tree",
+        "place_fallen_leaf_marks_below_tree"
+      ],
+      "difficulty": 4,
+      "line1": "⑥ 뽁뽁이·완충재로 알록달록 가을나무 꾸미기",
+      "line2": "빨강·노랑·주황 물감을 묻힌 뽁뽁이와 과일 완충재를 이용해 나무 위에 단풍을 찍고, 나무 아래에도 떨어진 낙엽을 표현해보았어요.",
+      "options": [
+        {
+          "value": 1,
+          "label": "교사가 뽁뽁이와 완충재로 물감을 찍는 모습을 바라보았어요."
+        },
+        {
+          "value": 2,
+          "label": "교사의 도움을 받아 도구에 물감을 묻혀 종이에 찍어보았어요."
+        },
+        {
+          "value": 3,
+          "label": "도구를 잡고 나무 활동지에 색깔 무늬를 남겨보았어요."
+        },
+        {
+          "value": 4,
+          "label": "교사가 가리키는 나뭇가지 주변에 도구를 맞춰 찍어보았어요."
+        },
+        {
+          "value": 5,
+          "label": "스스로 도구를 움직여 나무 위쪽에 나뭇잎 무늬를 여러 번 찍었어요."
+        },
+        {
+          "value": 6,
+          "label": "두 가지 도구를 바꿔 사용하며 나무 위의 나뭇잎을 표현했어요."
+        },
+        {
+          "value": 7,
+          "label": "나무 위와 아래의 위치를 구분해 나뭇잎과 떨어진 낙엽을 표현했어요."
+        },
+        {
+          "value": 8,
+          "label": "색깔과 도구를 스스로 선택하고 찍을 위치를 조절하여 나무 위의 단풍과 바닥의 낙엽을 완성했어요."
         }
       ]
     }
