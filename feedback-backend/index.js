@@ -1055,4 +1055,5 @@ const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log("🔥 JOYJOY LLM 서버 시작됨!");
   console.log(`✅ Server listening on port ${PORT}`);
+  console.log("[ENV CHECK] OPENAI_API_KEY:", process.env.OPENAI_API_KEY?.trim() ? "present" : "missing");
 });
