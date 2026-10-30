@@ -114,7 +114,8 @@ app.use("/api", ttsRouter);
 // const monthlyReportRouter = require("./routes/monthlyReport");
 // app.use("/api/monthly", monthlyReportRouter);
 
-
+const blogReviewRouter = require("./routes/blogReview");
+app.use("/api/blog-review", blogReviewRouter);
 
 app.get("/", (req, res) => {
   res.send("JOYJOY Feedback Backend is running.");
