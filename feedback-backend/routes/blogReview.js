@@ -1,6 +1,6 @@
 'use strict';
 const express = require('express');
-const {generateBlogReview} = require('../services/blogReviewGenerator');
+const {generateBlogReview} = require('../services/monthlyReport/blogReviewGenerator');
 const router = express.Router();
 const hits = new Map();
 const WINDOW_MS = 60 * 60 * 1000;

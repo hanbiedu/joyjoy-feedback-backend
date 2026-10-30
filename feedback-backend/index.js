@@ -110,6 +110,9 @@ app.post("/api/monthly/generate", async (req, res) => {
 const ttsRouter = require("./tts");
 app.use("/api", ttsRouter);
 
+const blogReviewRouter = require("./routes/blogReview");
+app.use("/api/blog-review", blogReviewRouter);
+
 
 // const monthlyReportRouter = require("./routes/monthlyReport");
 // app.use("/api/monthly", monthlyReportRouter);
